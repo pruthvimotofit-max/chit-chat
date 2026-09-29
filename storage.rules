@@ -1,0 +1,71 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // =========================================
+    // MESSAGE ATTACHMENTS
+    // =========================================
+    match /messageAttachments/{conversationId}/{userId}/{fileName} {
+      // Only participants in the conversation can read attachments.
+      allow read: if request.auth != null
+        && request.auth.uid in firestore.get(
+          /databases/(default)/documents/conversations/$(conversationId)
+        ).data.participantIds;
+
+      // Only a conversation participant can upload
+      // files under their own user folder.
+      allow create: if request.auth != null
+        && request.auth.uid == userId
+        && request.auth.uid in firestore.get(
+          /databases/(default)/documents/conversations/$(conversationId)
+        ).data.participantIds
+        && request.resource.size <= 25 * 1024 * 1024
+        && request.resource.contentType.matches(
+          'image/.*|video/.*|application/pdf|text/.*|application/msword|application/vnd.openxmlformats-officedocument.*'
+        );
+
+      // Attachments are immutable for now.
+      allow update: if false;
+
+      // Only the uploader can delete their own attachment.
+      allow delete: if request.auth != null
+        && request.auth.uid == userId
+        && request.auth.uid in firestore.get(
+          /databases/(default)/documents/conversations/$(conversationId)
+        ).data.participantIds;
+    }
+
+    // =========================================
+    // APP MEDIA
+    // =========================================
+    match /media/{purpose}/{mediaType}/{userId}/{fileName} {
+
+      // Authenticated users can view media used by the app.
+      allow read: if request.auth != null;
+
+      // Only the authenticated owner can upload.
+      // Supports images and videos up to 100 MB.
+      allow create: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.size <= 100 * 1024 * 1024
+        && request.resource.contentType.matches(
+          'image/.*|video/.*'
+        );
+
+      // Media is immutable after upload.
+      allow update: if false;
+
+      // Only the owner can delete their media.
+      allow delete: if request.auth != null
+        && request.auth.uid == userId;
+    }
+
+    // =========================================
+    // EVERYTHING ELSE LOCKED
+    // =========================================
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

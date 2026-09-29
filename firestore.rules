@@ -1,0 +1,796 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =========================
+    // USER PROFILES
+    // =========================
+
+    match /users/{userId} {
+      allow read: if true;
+
+      allow create: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly([
+          "username",
+          "displayName",
+          "email",
+          "photoURL",
+          "bio",
+          "website",
+          "isPrivate",
+          "isVerified",
+          "followersCount",
+          "followingCount",
+          "postsCount",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.isVerified == false
+        && request.resource.data.followersCount == 0
+        && request.resource.data.followingCount == 0
+        && request.resource.data.postsCount == 0;
+
+      allow update: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "displayName",
+          "photoURL",
+          "bio",
+          "website",
+          "isPrivate",
+          "updatedAt"
+        ]);
+      allow delete: if request.auth != null
+        && request.auth.uid == userId;
+    }
+
+    // =========================
+    // FOLLOWERS
+    // =========================
+
+    match /users/{userId}/followers/{followerId} {
+      allow read: if request.auth != null;
+
+      allow create: if request.auth != null
+        && request.auth.uid == followerId
+        && followerId != userId
+        && request.resource.data.keys().hasOnly([
+          "followerId",
+          "followingId",
+          "createdAt"
+        ])
+        && request.resource.data.followerId == followerId
+        && request.resource.data.followingId == userId;
+
+      allow delete: if request.auth != null
+        && request.auth.uid == followerId;
+
+      allow update: if false;
+    }
+
+    // =========================
+    // FOLLOWING
+    // =========================
+
+    match /users/{userId}/following/{followingId} {
+      allow read: if request.auth != null;
+
+      allow create: if request.auth != null
+        && request.auth.uid == userId
+        && followingId != userId
+        && request.resource.data.keys().hasOnly([
+          "followerId",
+          "followingId",
+          "createdAt"
+        ])
+        && request.resource.data.followerId == userId
+        && request.resource.data.followingId == followingId;
+
+      allow delete: if request.auth != null
+        && request.auth.uid == userId;
+
+      allow update: if false;
+    }
+
+    // =========================
+    // USERNAMES
+    // =========================
+
+    match /usernames/{username} {
+      allow read: if true;
+
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+
+      allow update: if request.auth != null
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == resource.data.uid;
+
+      allow delete: if request.auth != null
+        && resource.data.uid == request.auth.uid;
+    }
+
+    // =========================
+    // POSTS
+    // =========================
+
+    match /posts/{postId} {
+      // Posts can be read by authenticated users.
+      allow read: if request.auth != null;
+
+      // A user can create a post only for themselves.
+      allow create: if request.auth != null
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.keys().hasOnly([
+          "authorId",
+          "caption",
+          "media",
+          "mediaType",
+          "postType",
+          "visibility",
+          "location",
+          "taggedUserIds",
+          "altText",
+          "commentsEnabled",
+          "hideLikeCount",
+          "hideShareCount",
+          "collaboratorIds",
+          "isPinned",
+          "pinnedAt",
+          "likesCount",
+          "commentsCount",
+          "sharesCount",
+          "repostsCount",
+          "viewsCount",
+          "isArchived",
+          "archivedAt",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.postType in ["post", "reel"]
+        && request.resource.data.likesCount == 0
+        && request.resource.data.commentsCount == 0
+        && request.resource.data.sharesCount == 0
+        && request.resource.data.repostsCount == 0
+        && request.resource.data.viewsCount == 0;
+
+      // The author can update normal post fields.
+      // A viewer can atomically increment viewsCount only when
+      // creating their own unique view document in the same transaction.
+      allow update: if (
+        request.auth != null
+        && resource.data.authorId == request.auth.uid
+        && request.resource.data.authorId == resource.data.authorId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "caption",
+          "media",
+          "mediaType",
+          "postType",
+          "visibility",
+          "location",
+          "taggedUserIds",
+          "altText",
+          "commentsEnabled",
+          "hideLikeCount",
+          "hideShareCount",
+          "collaboratorIds",
+          "updatedAt"
+        ])
+        && request.resource.data.get("commentsEnabled", true) is bool
+        && request.resource.data.get("hideLikeCount", false) is bool
+        && request.resource.data.get("hideShareCount", false) is bool
+        && request.resource.data.get("taggedUserIds", []) is list
+        && request.resource.data.get("collaboratorIds", []) is list
+        && request.resource.data.get("altText", "") is string
+        && request.resource.data.get("altText", "").size() <= 1000
+      ) || (
+        request.auth != null
+        && resource.data.authorId == request.auth.uid
+        && request.resource.data.authorId == resource.data.authorId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "isArchived",
+          "archivedAt",
+          "updatedAt"
+        ])
+        && request.resource.data.isArchived is bool
+        && (
+          (
+            request.resource.data.isArchived == true
+            && request.resource.data.archivedAt is timestamp
+          )
+          ||
+          (
+            request.resource.data.isArchived == false
+            && request.resource.data.archivedAt == null
+          )
+        )
+      ) || (
+        request.auth != null
+        && request.resource.data.authorId == resource.data.authorId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "viewsCount"
+        ])
+        && request.resource.data.viewsCount == resource.data.viewsCount + 1
+        && getAfter(
+          /databases/$(database)/documents/posts/$(postId)/views/$(request.auth.uid)
+        ).data.userId == request.auth.uid
+        && getAfter(
+          /databases/$(database)/documents/posts/$(postId)/views/$(request.auth.uid)
+        ).data.postId == postId
+      );
+
+      // Only the author can delete their post.
+      allow delete: if request.auth != null
+        && resource.data.authorId == request.auth.uid;
+    }
+
+    // =========================
+    // POST LIKES
+    match /posts/{postId}/likes/{userId} {
+      allow read: if request.auth != null;
+
+      allow create: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.postId == postId
+        && request.resource.data.keys().hasOnly([
+          "userId",
+          "postId",
+          "createdAt"
+        ]);
+
+      allow delete: if request.auth != null
+        && request.auth.uid == userId;
+
+      allow update: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.postId == postId
+        && request.resource.data.keys().hasOnly([
+          "userId",
+          "postId",
+          "createdAt"
+        ]);
+    }
+
+    // POST COMMENTS
+    match /posts/{postId}/comments/{commentId} {
+      allow read: if request.auth != null;
+
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.postId == postId
+        && request.resource.data.keys().hasOnly([
+          "userId",
+          "postId",
+          "text",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 1000;
+
+      allow update: if request.auth != null
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.postId == resource.data.postId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "text",
+          "updatedAt"
+        ])
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 1000;
+
+      allow delete: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // COMMENT LIKES
+    match /posts/{postId}/comments/{commentId}/likes/{userId} {
+      allow read: if request.auth != null;
+
+      allow create: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.postId == postId
+        && request.resource.data.commentId == commentId
+        && request.resource.data.keys().hasOnly([
+          "userId",
+          "postId",
+          "commentId",
+          "createdAt"
+        ]);
+
+      allow delete: if request.auth != null
+        && request.auth.uid == userId;
+
+      allow update: if false;
+    }
+
+    // COMMENT REPLIES
+    match /posts/{postId}/comments/{commentId}/replies/{replyId} {
+      allow read: if request.auth != null;
+
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.postId == postId
+        && request.resource.data.commentId == commentId
+        && request.resource.data.keys().hasOnly([
+          "userId",
+          "postId",
+          "commentId",
+          "text",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 1000;
+
+      allow update: if request.auth != null
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.postId == resource.data.postId
+        && request.resource.data.commentId == resource.data.commentId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "text",
+          "updatedAt"
+        ])
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 1000;
+
+      allow delete: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // POST SAVES
+    match /posts/{postId}/saves/{userId} {
+      allow read: if request.auth != null;
+
+      allow create: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.postId == postId
+        && request.resource.data.keys().hasOnly([
+          "userId",
+          "postId",
+          "createdAt"
+        ]);
+
+      allow delete: if request.auth != null
+        && request.auth.uid == userId;
+
+      allow update: if false;
+    }
+
+    // POST SHARES
+    match /posts/{postId}/shares/{shareId} {
+      allow read: if request.auth != null;
+
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.postId == postId
+        && request.resource.data.keys().hasOnly([
+          "postId",
+          "userId",
+          "method",
+          "createdAt"
+        ])
+        && request.resource.data.method in [
+          "native",
+          "copy_link",
+          "direct_message",
+          "whatsapp",
+          "facebook",
+          "telegram",
+          "x",
+          "email"
+        ];
+
+      allow update, delete: if false;
+    }
+    // =========================
+    // POST REPOSTS
+    // =========================
+    match /reposts/{repostId} {
+      allow read: if request.auth != null;
+
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.postId is string
+        && request.resource.data.originalAuthorId is string
+        && request.resource.data.originalAuthorId != request.auth.uid
+        && request.resource.data.keys().hasOnly([
+          "postId",
+          "userId",
+          "originalAuthorId",
+          "createdAt"
+        ])
+        && repostId == request.auth.uid + "_" + request.resource.data.postId
+        && request.resource.data.createdAt == request.time;
+
+      allow update: if false;
+
+      allow delete: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+    }
+
+
+
+    // POST VIEWS
+    match /posts/{postId}/views/{userId} {
+      allow read: if request.auth != null;
+
+      allow create: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.postId == postId
+        && request.resource.data.keys().hasOnly([
+          "postId",
+          "userId",
+          "createdAt"
+        ]);
+
+      allow update, delete: if false;
+    }
+
+    // =========================
+    // NOTIFICATIONS
+    // =========================
+    match /users/{userId}/notifications/{notificationId} {
+      // Only the notification recipient can read their notifications.
+      allow read: if request.auth != null
+        && request.auth.uid == userId;
+
+      // A signed-in user can create a notification as themselves,
+      // but cannot create one for themselves.
+      allow create: if request.auth != null
+        && request.resource.data.recipientId == userId
+        && request.resource.data.actorId == request.auth.uid
+        && request.resource.data.actorId != userId
+        && request.resource.data.keys().hasOnly([
+          "recipientId",
+          "actorId",
+          "type",
+          "message",
+          "postId",
+          "commentId",
+          "conversationId",
+          "actorUsername",
+          "actorPhotoURL",
+          "isRead",
+          "createdAt"
+        ])
+        && request.resource.data.isRead == false;
+
+      // Only the recipient can mark their notifications as read/unread.
+      allow update: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "isRead"
+        ])
+        && request.resource.data.isRead is bool;
+
+      // Recipients can delete their own notifications.
+      allow delete: if request.auth != null
+        && request.auth.uid == userId;
+    }
+
+    // =========================
+    // MESSAGES / CONVERSATIONS
+    // =========================
+
+    match /conversations/{conversationId} {
+
+      // Only participants can read a conversation.
+      allow read: if request.auth != null
+        && request.auth.uid in resource.data.participantIds;
+
+      // A conversation must contain exactly two different users,
+      // and the authenticated user must be one of them.
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly([
+          "participantIds",
+          "participantsKey",
+          "lastMessage",
+          "lastMessageAt",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.participantIds is list
+        && request.resource.data.participantIds.size() == 2
+        && request.auth.uid in request.resource.data.participantIds
+        && request.resource.data.participantIds[0] != request.resource.data.participantIds[1]
+        && request.resource.data.lastMessage is string;
+
+      // Participants can update conversation activity fields.
+      // Plain activity updates cannot modify unread state.
+      allow update: if request.auth != null
+        && request.auth.uid in resource.data.participantIds
+        && request.resource.data.participantIds == resource.data.participantIds
+        && request.resource.data.participantsKey == resource.data.participantsKey
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "lastMessage",
+          "lastMessageAt",
+          "updatedAt"
+        ])
+        && request.resource.data.lastMessage is string;
+
+      // Sending a message must atomically create that message and
+      // update the conversation activity + recipient unread count.
+      allow update: if request.auth != null
+        && request.auth.uid in resource.data.participantIds
+        && request.resource.data.participantIds == resource.data.participantIds
+        && request.resource.data.participantsKey == resource.data.participantsKey
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "lastMessage",
+          "lastMessageAt",
+          "updatedAt",
+          "lastMessageId",
+          "unreadCounts"
+        ])
+        && request.resource.data.lastMessage is string
+        && request.resource.data.lastMessageId is string
+        && request.resource.data.lastMessageId.size() > 0
+        && request.resource.data.get("unreadCounts", {}).get(
+          request.auth.uid == resource.data.participantIds[0]
+            ? resource.data.participantIds[1]
+            : resource.data.participantIds[0],
+          0
+        ) is int
+        && request.resource.data.get("unreadCounts", {}).get(
+          request.auth.uid == resource.data.participantIds[0]
+            ? resource.data.participantIds[1]
+            : resource.data.participantIds[0],
+          0
+        )
+        ==
+        resource.data.get("unreadCounts", {}).get(
+          request.auth.uid == resource.data.participantIds[0]
+            ? resource.data.participantIds[1]
+            : resource.data.participantIds[0],
+          0
+        ) + 1
+        && getAfter(
+          /databases/$(database)/documents/conversations/$(conversationId)/messages/$(request.resource.data.lastMessageId)
+        ).data.senderId == request.auth.uid
+        && getAfter(
+          /databases/$(database)/documents/conversations/$(conversationId)/messages/$(request.resource.data.lastMessageId)
+        ).data.messageType in [
+          "text",
+          "image",
+          "video",
+          "file"
+        ];
+
+      // Marking a conversation read may only clear the caller's
+      // own unread count, and must atomically write that user's read state.
+      allow update: if request.auth != null
+        && request.auth.uid in resource.data.participantIds
+        && request.resource.data.participantIds == resource.data.participantIds
+        && request.resource.data.participantsKey == resource.data.participantsKey
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "unreadCounts"
+        ])
+        && request.resource.data.get("unreadCounts", {}).get(
+          request.auth.uid,
+          0
+        ) == 0
+        && getAfter(
+          /databases/$(database)/documents/conversations/$(conversationId)/readState/$(request.auth.uid)
+        ).data.userId == request.auth.uid
+        && getAfter(
+          /databases/$(database)/documents/conversations/$(conversationId)/readState/$(request.auth.uid)
+        ).data.lastReadAt == request.time;
+
+      allow delete: if request.auth != null
+        && request.auth.uid in resource.data.participantIds;
+
+
+      // =========================
+      // CONVERSATION MESSAGES
+      // =========================
+
+      match /messages/{messageId} {
+
+        // Only conversation participants can read messages.
+        allow read: if request.auth != null
+          && request.auth.uid in get(
+            /databases/$(database)/documents/conversations/$(conversationId)
+          ).data.participantIds;
+
+    // Only a conversation participant can send a message,
+    // and the sender must be the authenticated user.
+    allow create: if request.auth != null
+      && request.auth.uid in get(
+        /databases/$(database)/documents/conversations/$(conversationId)
+      ).data.participantIds
+      && request.resource.data.senderId == request.auth.uid
+      && request.resource.data.keys().hasOnly([
+        "senderId",
+        "text",
+        "messageType",
+        "createdAt",
+        "updatedAt",
+        "isDeleted",
+        "attachmentUrl",
+        "attachmentName",
+        "attachmentType",
+        "attachmentSize"
+      ])
+      && request.resource.data.text is string
+      && request.resource.data.text.size() <= 5000
+      && request.resource.data.messageType in [
+        "text",
+        "image",
+        "video",
+        "file"
+      ]
+      && request.resource.data.isDeleted == false
+      && (
+        request.resource.data.messageType == "text"
+        ? !request.resource.data.keys().hasAny([
+            "attachmentUrl",
+            "attachmentName",
+            "attachmentType",
+            "attachmentSize"
+          ])
+        : request.resource.data.keys().hasAll([
+            "attachmentUrl",
+            "attachmentName",
+            "attachmentType",
+            "attachmentSize"
+          ])
+          && request.resource.data.attachmentUrl is string
+          && request.resource.data.attachmentUrl.size() > 0
+          && request.resource.data.attachmentName is string
+          && request.resource.data.attachmentName.size() > 0
+          && request.resource.data.attachmentName.size() <= 255
+          && request.resource.data.attachmentType is string
+          && request.resource.data.attachmentType.size() > 0
+          && request.resource.data.attachmentType.size() <= 200
+          && request.resource.data.attachmentSize is int
+          && request.resource.data.attachmentSize > 0
+          && request.resource.data.attachmentSize <= 25 * 1024 * 1024
+      );
+
+        // Messages cannot currently be edited.
+        allow update: if false;
+
+        // A sender can delete their own message.
+        allow delete: if request.auth != null
+          && resource.data.senderId == request.auth.uid;
+      }
+
+
+      // =========================
+      // MESSAGE READ STATE
+      // =========================
+
+      match /readState/{userId} {
+
+        // Conversation participants can read read-state documents
+        // so the sender can determine whether their message was seen.
+        allow read: if request.auth != null
+          && request.auth.uid in get(
+            /databases/$(database)/documents/conversations/$(conversationId)
+          ).data.participantIds;
+
+        // A user can write only their own read state.
+        allow create, update: if request.auth != null
+          && request.auth.uid == userId
+          && request.auth.uid in get(
+            /databases/$(database)/documents/conversations/$(conversationId)
+          ).data.participantIds
+          && request.resource.data.keys().hasOnly([
+            "userId",
+            "lastReadAt"
+          ])
+          && request.resource.data.userId == request.auth.uid;
+
+        allow delete: if request.auth != null
+          && request.auth.uid == userId;
+      }
+    }
+
+    // =========================
+    // STORIES
+    // =========================
+
+    match /stories/{storyId} {
+      // Only signed-in users can read Stories.
+      // The client query filters out expired Stories.
+      allow read: if request.auth != null;
+
+      // A user can create only their own Story.
+      allow create: if request.auth != null
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.keys().hasOnly([
+          "authorId",
+          "media",
+          "mediaType",
+          "caption",
+          "visibility",
+          "createdAt",
+          "expiresAt"
+        ])
+        && request.resource.data.media is list
+        && request.resource.data.mediaType in [
+          "image",
+          "video"
+        ]
+        && request.resource.data.visibility in [
+          "public",
+          "followers"
+        ]
+        && request.resource.data.expiresAt > request.time;
+
+      // Stories cannot be edited.
+      allow update: if false;
+
+      // Only the Story owner can delete it.
+      allow delete: if request.auth != null
+        && resource.data.authorId == request.auth.uid;
+
+
+      // =========================
+      // STORY VIEWS
+      // =========================
+
+      match /views/{userId} {
+        allow read: if request.auth != null
+          && get(
+            /databases/$(database)/documents/stories/$(storyId)
+          ).data.expiresAt > request.time;
+
+        allow create: if request.auth != null
+          && request.auth.uid == userId
+          && request.resource.data.keys().hasOnly([
+            "userId",
+            "storyId",
+            "createdAt"
+          ])
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.storyId == storyId;
+
+        allow update, delete: if false;
+      }
+    }
+
+    // =========================
+    // POST INTERACTION COLLECTION-GROUP READS
+    // =========================
+
+    match /{path=**}/likes/{likeId} {
+      allow read: if request.auth != null;
+    }
+
+    match /{path=**}/comments/{commentId} {
+      allow read: if request.auth != null;
+    }
+
+    
+match /{path=**}/saves/{saveId} {
+  allow read: if request.auth != null;
+}
+
+match /{path=**}/shares/{shareId} {
+      allow read: if request.auth != null;
+    }
+
+    // EVERYTHING ELSE LOCKED
+    // =========================
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

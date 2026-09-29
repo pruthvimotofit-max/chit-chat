@@ -1,0 +1,92 @@
+import {
+  Bell,
+  Home,
+  Menu,
+  MessageCircle,
+  PlusSquare,
+  Search,
+  User,
+  Video,
+} from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { BRAND } from "../../config/brand";
+
+const navigationItems = [
+  { label: "Home", icon: Home, path: "/" },
+  { label: "Search", icon: Search, path: "/explore" },
+  { label: "Reels", icon: Video, path: "/reels" },
+  { label: "Messages", icon: MessageCircle, path: "/messages" },
+  { label: "Notifications", icon: Bell, path: "/notifications" },
+  { label: "Create", icon: PlusSquare, path: "/create" },
+  { label: "Profile", icon: User, path: "/profile" },
+];
+
+function AppSidebar() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  function isActive(path, label) {
+    if (label === "Search") {
+      return false;
+    }
+
+    if (path === "/") {
+      return location.pathname === "/";
+    }
+
+    return (
+      location.pathname === path ||
+      location.pathname.startsWith(`${path}/`)
+    );
+  }
+
+  return (
+    <aside className="app-sidebar">
+      <button
+        className="sidebar-brand"
+        type="button"
+        onClick={() => navigate("/")}
+        aria-label={`${BRAND.name} home`}
+      >
+        <span className="sidebar-brand-symbol">C</span>
+        <span className="sidebar-brand-wordmark">{BRAND.name}</span>
+      </button>
+
+      <nav className="sidebar-nav" aria-label="Primary navigation">
+        {navigationItems.map(({ label, icon: Icon, path }) => (
+          <button
+            key={label}
+            className={`sidebar-nav-item ${
+              isActive(path, label) ? "active" : ""
+            }`}
+            type="button"
+            onClick={() => navigate(path)}
+            aria-label={label}
+          >
+            <Icon
+              className="sidebar-nav-icon"
+              size={25}
+              strokeWidth={isActive(path, label) ? 2.35 : 1.85}
+            />
+
+            <span className="sidebar-nav-label">{label}</span>
+          </button>
+        ))}
+      </nav>
+
+      <div className="sidebar-bottom">
+        <button
+          className="sidebar-more"
+          type="button"
+          onClick={() => navigate("/settings")}
+          aria-label="More"
+        >
+          <Menu size={25} strokeWidth={1.85} />
+          <span>More</span>
+        </button>
+      </div>
+    </aside>
+  );
+}
+
+export default AppSidebar;

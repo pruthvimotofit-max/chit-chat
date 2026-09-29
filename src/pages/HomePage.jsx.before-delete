@@ -1,0 +1,201 @@
+import { useEffect, useState } from "react";
+import {
+  Bell,
+  Heart,
+  Plus,
+  Search,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+import Stories from "../components/social/Stories";
+import PostCard from "../components/social/PostCard";
+import { getFeedPosts } from "../features/feed/feedService";
+import "../styles/home.css";
+
+function HomePage() {
+  const navigate = useNavigate();
+
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadPosts() {
+      try {
+        setLoading(true);
+        setError("");
+
+        const result = await getFeedPosts();
+
+        if (mounted) {
+          setPosts(result);
+        }
+      } catch (err) {
+        console.error("Failed to load posts:", err);
+
+        if (mounted) {
+          setError("Unable to load posts.");
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadPosts();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  return (
+    <main className="cc-home-page">
+      <header className="cc-home-mobile-header">
+        <button
+          type="button"
+          aria-label="Create"
+          onClick={() => navigate("/create")}
+        >
+          <Plus size={29} strokeWidth={2.2} />
+        </button>
+
+        <strong>Chit Chat</strong>
+
+        <div className="cc-home-header-actions">
+          <button
+            type="button"
+            aria-label="Search"
+            onClick={() => navigate("/explore")}
+          >
+            <Search size={25} strokeWidth={2.1} />
+          </button>
+
+          <button
+            type="button"
+            aria-label="Notifications"
+            onClick={() => navigate("/notifications")}
+          >
+            <Bell size={25} strokeWidth={2.1} />
+            <span className="cc-home-notification-dot" />
+          </button>
+        </div>
+      </header>
+
+      <div className="cc-home-layout">
+        <div className="cc-home-feed">
+          <Stories />
+
+          <section className="cc-home-feed-list" aria-label="Feed">
+            {loading && (
+              <div className="cc-home-state">
+                <div className="cc-home-spinner" />
+                <span>Loading your feed...</span>
+              </div>
+            )}
+
+            {!loading && error && (
+              <div className="cc-home-state cc-home-error">
+                <h3>Something went wrong</h3>
+                <p>{error}</p>
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                >
+                  Try again
+                </button>
+              </div>
+            )}
+
+            {!loading && !error && posts.length === 0 && (
+              <div className="cc-home-state">
+                <div className="cc-home-empty-icon">
+                  <Heart size={30} />
+                </div>
+                <h3>Your feed is quiet</h3>
+                <p>Follow people or create your first post to get started.</p>
+                <button type="button" onClick={() => navigate("/create")}>
+                  Create post
+                </button>
+              </div>
+            )}
+
+            {!loading &&
+              !error &&
+              posts.map((post) => (
+                <PostCard
+                  key={post.id}
+                  id={post.id}
+                  username={post.author?.username || "unknown"}
+                  location={post.location}
+                  initial={
+                    post.author?.displayName?.charAt(0)?.toUpperCase() ||
+                    post.author?.username?.charAt(0)?.toUpperCase() ||
+                    "C"
+                  }
+                  image={post.media?.[0]?.url || post.media?.[0] || ""}
+                  likes={post.likesCount || 0}
+                  caption={post.caption}
+                  comments={post.commentsCount || 0}
+                  time="Just now"
+                />
+              ))}
+          </section>
+        </div>
+
+        <aside className="cc-home-desktop-aside">
+          <div className="cc-home-aside-profile">
+            <div className="cc-home-aside-avatar">C</div>
+            <div>
+              <strong>Chit Chat</strong>
+              <span>Welcome to your feed</span>
+            </div>
+          </div>
+
+          <section className="cc-home-aside-section">
+            <header>
+              <strong>Suggested for you</strong>
+              <button type="button">See all</button>
+            </header>
+
+            {["travel.freak", "fit.withme", "carculture", "fooddiaries"].map(
+              (username) => (
+                <div className="cc-home-suggestion" key={username}>
+                  <span>{username.charAt(0).toUpperCase()}</span>
+                  <div>
+                    <strong>{username}</strong>
+                    <small>Suggested for you</small>
+                  </div>
+                  <button type="button">Follow</button>
+                </div>
+              ),
+            )}
+          </section>
+
+          <section className="cc-home-aside-section">
+            <header>
+              <strong>Trending</strong>
+            </header>
+
+            {[
+              ["#ChitChatCreators", "12.4K posts"],
+              ["#TravelDiaries", "8.1K posts"],
+              ["#FitnessJourney", "6.9K posts"],
+              ["#CarCulture", "4.3K posts"],
+            ].map(([tag, count]) => (
+              <button className="cc-home-trend" type="button" key={tag}>
+                <strong>{tag}</strong>
+                <span>{count}</span>
+              </button>
+            ))}
+          </section>
+        </aside>
+      </div>
+    </main>
+  );
+}
+
+export default HomePage;

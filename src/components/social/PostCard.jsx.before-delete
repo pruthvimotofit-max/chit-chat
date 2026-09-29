@@ -1,0 +1,620 @@
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Bookmark,
+  CircleCheck,
+  CircleX,
+  Flag,
+  Heart,
+  Link2,
+  MessageCircle,
+  MoreHorizontal,
+  Send,
+  X,
+} from "lucide-react";
+
+import { useAuth } from "../../features/auth/AuthProvider";
+import CommentsPanel from "./CommentsPanel";
+import SharePanel from "./SharePanel";
+import {
+  getLikeCount,
+  hasLikedPost,
+  likePost,
+  unlikePost,
+} from "../../services/likes/likeService";
+import {
+  hasSavedPost,
+  savePost,
+  unsavePost,
+} from "../../services/saves/saveService";
+import {
+  getCommentCount,
+} from "../../services/comments/commentService";
+import {
+  getShareCount,
+  performShare,
+} from "../../services/shares/shareService";
+import { recordPostView } from "../../services/views/viewService";
+
+function PostCard({
+  id,
+  username,
+  location,
+  initial,
+  image,
+  likes,
+  caption,
+  comments,
+  time,
+}) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const postRef = useRef(null);
+
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(likes || 0);
+  const [likeLoading, setLikeLoading] = useState(true);
+  const [likeError, setLikeError] = useState("");
+
+  const [saved, setSaved] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(true);
+  const [saveError, setSaveError] = useState("");
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [moreMessage, setMoreMessage] = useState("");
+
+
+  const [shareMessage, setShareMessage] = useState("");
+  const [shareCount, setShareCount] = useState(0);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [sharePanelOpen, setSharePanelOpen] = useState(false);
+
+  const [showComments, setShowComments] = useState(false);
+  const [commentCount, setCommentCount] = useState(comments || 0);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadInteractionCounts() {
+      if (!id) return;
+
+      try {
+        const [realLikeCount, realShareCount] = await Promise.all([
+          getLikeCount(id),
+          getShareCount(id),
+        ]);
+
+        if (mounted) {
+          setLikeCount(realLikeCount);
+          setShareCount(realShareCount);
+        }
+      } catch (error) {
+        console.error("Failed to load interaction counts:", error);
+      }
+    }
+
+    loadInteractionCounts();
+
+    return () => {
+      mounted = false;
+    };
+  }, [id]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadCommentCount() {
+      if (!id) return;
+
+      try {
+        const count = await getCommentCount(id);
+
+        if (mounted) {
+          setCommentCount(count);
+        }
+      } catch (error) {
+        console.error("Failed to load comment count:", error);
+      }
+    }
+
+    loadCommentCount();
+
+    return () => {
+      mounted = false;
+    };
+  }, [id]);
+
+  useEffect(() => {
+    if (!id || !user) return;
+
+    let cancelled = false;
+
+    async function recordView() {
+      console.log("VIEW ATTEMPT:", {
+        postId: id,
+        userId: user.uid,
+      });
+
+      try {
+        const created = await recordPostView(id, user.uid);
+
+        if (!cancelled) {
+          console.log("VIEW RECORDED:", {
+            postId: id,
+            userId: user.uid,
+            created,
+          });
+        }
+      } catch (error) {
+        console.error("VIEW ERROR:", error);
+      }
+    }
+
+    recordView();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id, user]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadPostCounts() {
+      if (!id) return;
+
+      try {
+        const [liveLikes, liveComments, liveShares] =
+          await Promise.all([
+            getLikeCount(id),
+            getCommentCount(id),
+            getShareCount(id),
+          ]);
+
+        if (!mounted) return;
+
+        setLikeCount(liveLikes);
+        setCommentCount(liveComments);
+        setShareCount(liveShares);
+      } catch (error) {
+        console.error("Failed to load post counts:", error);
+      }
+    }
+
+    loadPostCounts();
+
+    return () => {
+      mounted = false;
+    };
+  }, [id]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadLikeState() {
+      if (!id || !user) {
+        if (mounted) {
+          setLiked(false);
+          setLikeLoading(false);
+        }
+        return;
+      }
+
+      try {
+        setLikeLoading(true);
+
+        const result = await hasLikedPost(id, user.uid);
+
+        if (mounted) {
+          setLiked(result);
+        }
+      } catch (error) {
+        console.error("Failed to load like state:", error);
+      } finally {
+        if (mounted) {
+          setLikeLoading(false);
+        }
+      }
+    }
+
+    loadLikeState();
+
+    return () => {
+      mounted = false;
+    };
+  }, [id, user]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadSaveState() {
+      if (!id || !user) {
+        if (mounted) {
+          setSaved(false);
+          setSaveLoading(false);
+        }
+        return;
+      }
+
+      try {
+        setSaveLoading(true);
+
+        const result = await hasSavedPost(id, user.uid);
+
+        if (mounted) {
+          setSaved(result);
+        }
+      } catch (error) {
+        console.error("Failed to load save state:", error);
+      } finally {
+        if (mounted) {
+          setSaveLoading(false);
+        }
+      }
+    }
+
+    loadSaveState();
+
+    return () => {
+      mounted = false;
+    };
+  }, [id, user]);
+
+  async function handleLike() {
+    if (!id || !user || likeLoading) {
+      return;
+    }
+
+    setLikeError("");
+    setLikeLoading(true);
+
+    const previousState = liked;
+    const previousCount = likeCount;
+    const nextState = !liked;
+
+    setLiked(nextState);
+    setLikeCount((current) =>
+      Math.max(0, current + (nextState ? 1 : -1)),
+    );
+
+    try {
+      if (nextState) {
+        await likePost(id, user.uid);
+      } else {
+        await unlikePost(id, user.uid);
+      }
+
+      const realCount = await getLikeCount(id);
+      setLikeCount(realCount);
+    } catch (error) {
+      console.error("Failed to update like:", error);
+      setLiked(previousState);
+      setLikeCount(previousCount);
+      setLikeError("Couldn't update like.");
+    } finally {
+      setLikeLoading(false);
+    }
+  }
+
+  async function handleSave() {
+    if (!id || !user || saveLoading) {
+      return;
+    }
+
+    setSaveError("");
+    setSaveLoading(true);
+
+    const previousState = saved;
+    const nextState = !saved;
+
+    setSaved(nextState);
+
+    try {
+      if (nextState) {
+        await savePost(id, user.uid);
+      } else {
+        await unsavePost(id, user.uid);
+      }
+    } catch (error) {
+      console.error("Failed to update save:", error);
+
+      setSaved(previousState);
+      setSaveError("Couldn't update save.");
+    } finally {
+      setSaveLoading(false);
+    }
+  }
+
+  function handleShare() {
+    if (!id || !user) {
+      return;
+    }
+
+    setSharePanelOpen(true);
+  }
+
+  function handleCommentsToggle() {
+    setShowComments((current) => !current);
+  }
+
+  async function handleCopyPostLink() {
+    try {
+      const postUrl = `${window.location.origin}${window.location.pathname}#post-${id}`;
+      await navigator.clipboard.writeText(postUrl);
+      setMoreMessage("Link copied");
+    } catch (error) {
+      console.error("Failed to copy post link:", error);
+      setMoreMessage("Couldn't copy link");
+    }
+    setTimeout(() => setMoreMessage(""), 1800);
+  }
+
+  function handlePostPreference(message) {
+    setMoreOpen(false);
+    setMoreMessage(message);
+    setTimeout(() => setMoreMessage(""), 1800);
+  }
+
+  function handleReportPost() {
+    setMoreOpen(false);
+    setMoreMessage("Thanks. We'll review this post.");
+    setTimeout(() => setMoreMessage(""), 2200);
+  }
+
+  return (
+    <article className="post-card" ref={postRef}>
+      <header className="post-header">
+        <div className="post-user">
+          <button
+            type="button"
+            className="post-avatar-button"
+            aria-label={`Open ${username} profile`}
+          >
+            <span className="post-avatar">{initial}</span>
+          </button>
+
+          <div className="post-user-info">
+            <strong>{username}</strong>
+            {location && <span>{location}</span>}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          className="post-more-button"
+          aria-label="More options"
+          aria-expanded={moreOpen}
+          onClick={() => setMoreOpen(true)}
+        >
+          <MoreHorizontal size={21} />
+        </button>
+      </header>
+
+      {moreOpen && (
+        <div
+          className="post-more-backdrop"
+          role="presentation"
+          onClick={() => setMoreOpen(false)}
+        >
+          <div
+            className="post-more-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Post options"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="post-more-handle" />
+
+            <div className="post-more-sheet-header">
+              <strong>Post options</strong>
+              <button
+                type="button"
+                aria-label="Close"
+                onClick={() => setMoreOpen(false)}
+              >
+                <X size={21} />
+              </button>
+            </div>
+
+            <div className="post-more-list">
+              
+
+              <button
+                type="button"
+                onClick={() =>
+                  handlePostPreference("We'll show you more posts like this.")
+                }
+              >
+                <CircleCheck size={21} />
+                <span>Interested</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  handlePostPreference("We'll show you fewer posts like this.")
+                }
+              >
+                <CircleX size={21} />
+                <span>Not interested</span>
+              </button>
+
+              <button
+                type="button"
+                className="post-more-danger"
+                onClick={handleReportPost}
+              >
+                <Flag size={21} />
+                <span>Report</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="post-media">
+        {image ? (
+          image.match(/\.(mp4|webm|mov|m4v)(\?.*)?$/i) ? (
+            <video
+              src={image}
+              controls
+              playsInline
+              preload="metadata"
+              aria-label={caption || "Post video"}
+            />
+          ) : (
+            <img
+              src={image}
+              alt={caption || "Post"}
+              loading="lazy"
+            />
+          )
+        ) : (
+          <div className="post-media-empty">
+            <span>No media available</span>
+          </div>
+        )}
+      </div>
+
+      <div className="post-actions">
+        <div>
+          <button
+            type="button"
+            aria-label={liked ? "Unlike" : "Like"}
+            aria-pressed={liked}
+            onClick={handleLike}
+            disabled={likeLoading}
+            className={
+              liked
+                ? "post-like-button liked"
+                : "post-like-button"
+            }
+          >
+            <Heart
+              size={23}
+              fill={liked ? "currentColor" : "none"}
+            />
+          </button>
+
+          <button
+            type="button"
+            aria-label={`Comment${commentCount > 0 ? ` ${commentCount}` : ""}`}
+            aria-expanded={showComments}
+            onClick={handleCommentsToggle}
+            className="post-comment-button"
+          >
+            <MessageCircle size={23} />
+            {commentCount > 0 && (
+              <span className="post-action-count">{commentCount}</span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            aria-label="Share"
+            onClick={handleShare}
+            disabled={shareLoading}
+          >
+            <Send size={22} />
+          </button>
+        </div>
+
+        <button
+          type="button"
+          aria-label={saved ? "Unsave" : "Save"}
+          aria-pressed={saved}
+          onClick={handleSave}
+          disabled={saveLoading}
+          className={saved ? "post-save-button saved" : "post-save-button"}
+        >
+          <Bookmark
+            size={22}
+            fill={saved ? "currentColor" : "none"}
+          />
+        </button>
+      </div>
+
+      <div className="post-body">
+        <strong>{likeCount.toLocaleString()} likes</strong>
+
+        <p>
+          <strong>{username}</strong>{" "}
+          {caption}
+        </p>
+
+        <button
+          className="comments-link"
+          type="button"
+          onClick={handleCommentsToggle}
+        >
+          {showComments
+            ? commentCount > 0
+              ? `Hide comments · ${commentCount} ${commentCount === 1 ? "comment" : "comments"}`
+              : "Hide comments"
+            : commentCount > 0
+              ? `View all ${commentCount} ${commentCount === 1 ? "comment" : "comments"}`
+              : "Add a comment"}
+        </button>
+
+        {showComments && (
+          <CommentsPanel
+            postId={id}
+            user={user}
+            onClose={() => setShowComments(false)}
+          />
+        )}
+
+        {likeError && (
+          <span className="post-action-error">
+            {likeError}
+          </span>
+        )}
+
+        {saveError && (
+          <span className="post-action-error">
+            {saveError}
+          </span>
+        )}
+
+        {shareMessage && (
+          <span className="post-share-message">
+            {shareMessage}
+          </span>
+        )}
+
+        {sharePanelOpen && (
+          <SharePanel
+            postId={id}
+            userId={user?.uid}
+            shareUrl={`${window.location.origin}/post/${id}`}
+            title={`${username} on Chit Chat`}
+            text={caption || "Check out this post on Chit Chat"}
+            onClose={() => setSharePanelOpen(false)}
+            onShared={(method) => {
+              setShareCount((current) => current + 1);
+
+              const messages = {
+                whatsapp: "Shared to WhatsApp",
+                facebook: "Shared to Facebook",
+                telegram: "Shared to Telegram",
+                x: "Shared",
+                email: "Email share opened",
+                copy_link: "Post link copied",
+                native: "Shared successfully",
+              };
+
+              setShareMessage(messages[method] || "Shared successfully");
+
+              window.setTimeout(() => {
+                setShareMessage("");
+              }, 2500);
+            }}
+          />
+        )}
+
+        <span className="post-time">{time}</span>
+      </div>
+    </article>
+  );
+}
+
+export default PostCard;

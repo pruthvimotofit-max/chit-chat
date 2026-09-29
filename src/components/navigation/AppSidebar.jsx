@@ -1,0 +1,166 @@
+import {
+  Bell,
+  Home,
+  Menu,
+  MessageCircle,
+  PlusSquare,
+  Search,
+  User,
+  Video,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../features/auth/AuthProvider";
+import { subscribeToNotifications } from "../../services/notifications/notificationService";
+import { subscribeToConversations } from "../../services/messages/messageService";
+import { BRAND } from "../../config/brand";
+
+const navigationItems = [
+  { label: "Home", icon: Home, path: "/" },
+  { label: "Search", icon: Search, path: "/explore" },
+  { label: "Reels", icon: Video, path: "/reels" },
+  { label: "Messages", icon: MessageCircle, path: "/messages" },
+  { label: "Notifications", icon: Bell, path: "/notifications" },
+  { label: "Create", icon: PlusSquare, path: "/create" },
+  { label: "Profile", icon: User, path: "/profile" },
+];
+
+function AppSidebar() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+
+    const [unreadMessageCount, setUnreadMessageCount] = useState(0);
+useEffect(() => {
+    if (!user?.uid) {
+      setUnreadNotificationCount(0);
+      return undefined;
+    }
+
+    const unsubscribe = subscribeToNotifications(
+      user.uid,
+      (notifications) => {
+        const unreadCount = notifications.filter(
+          (notification) => notification.isRead !== true,
+        ).length;
+
+        setUnreadNotificationCount(unreadCount);
+      },
+    );
+
+    return unsubscribe;
+  }, [user?.uid]);
+
+
+  useEffect(() => {
+    if (!user?.uid) {
+      setUnreadMessageCount(0);
+      return undefined;
+    }
+
+    const unsubscribe = subscribeToConversations(
+      user.uid,
+      (conversations) => {
+        const unreadCount = conversations.reduce(
+          (total, conversation) =>
+            total +
+            Number(conversation.unreadCounts?.[user.uid] || 0),
+          0,
+        );
+
+        setUnreadMessageCount(unreadCount);
+      },
+    );
+
+    return unsubscribe;
+  }, [user?.uid]);
+
+  function isActive(path) {
+    if (path === "/") {
+      return location.pathname === "/";
+    }
+
+    return (
+      location.pathname === path ||
+      location.pathname.startsWith(`${path}/`)
+    );
+  }
+
+  return (
+    <aside className="app-sidebar">
+      <button
+        className="sidebar-brand"
+        type="button"
+        onClick={() => navigate("/")}
+        aria-label={`${BRAND.name} home`}
+      >
+        <span className="sidebar-brand-symbol">C</span>
+        <span className="sidebar-brand-wordmark">{BRAND.name}</span>
+      </button>
+
+      <nav className="sidebar-nav" aria-label="Primary navigation">
+        {navigationItems.map(({ label, icon: Icon, path }) => (
+          <button
+            key={label}
+            className={`sidebar-nav-item ${
+              isActive(path) ? "active" : ""
+            }`}
+            type="button"
+            onClick={() => navigate(path)}
+            aria-label={
+              label === "Notifications" && unreadNotificationCount > 0
+                ? `${label}, ${unreadNotificationCount} unread`
+                : label === "Messages" && unreadMessageCount > 0
+                  ? `${label}, ${unreadMessageCount} unread`
+                  : label
+            }
+          >
+            <span className="sidebar-nav-icon-wrap">
+              <Icon
+                className="sidebar-nav-icon"
+                size={25}
+                strokeWidth={isActive(path) ? 2.35 : 1.85}
+              />
+
+              {label === "Notifications" &&
+                unreadNotificationCount > 0 && (
+                  <span className="sidebar-notification-badge">
+                    {unreadNotificationCount > 99
+                      ? "99+"
+                      : unreadNotificationCount}
+                  </span>
+                )}
+
+              {label === "Messages" &&
+                unreadMessageCount > 0 && (
+                  <span className="sidebar-notification-badge">
+                    {unreadMessageCount > 99
+                      ? "99+"
+                      : unreadMessageCount}
+                  </span>
+                )}
+            </span>
+
+            <span className="sidebar-nav-label">{label}</span>
+          </button>
+        ))}
+      </nav>
+
+      <div className="sidebar-bottom">
+        <button
+          className="sidebar-more"
+          type="button"
+          onClick={() => navigate("/settings")}
+          aria-label="More"
+        >
+          <Menu size={25} strokeWidth={1.85} />
+          <span>More</span>
+        </button>
+      </div>
+    </aside>
+  );
+}
+
+export default AppSidebar;

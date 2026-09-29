@@ -1,0 +1,1384 @@
+
+/* Logout */
+.cc-settings-logout {
+  margin-top: 12px;
+  padding-bottom: 28px;
+}
+
+.cc-settings-logout button {
+  width: 100%;
+  min-height: 58px;
+  border: 0;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #e5485d;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 0 18px;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+  box-shadow: 0 1px 3px rgba(20, 24, 40, 0.04);
+  transition: background 0.18s ease, transform 0.18s ease;
+}
+
+.cc-settings-logout button:hover {
+  background: #fff5f6;
+}
+
+.cc-settings-logout button:active {
+  transform: scale(0.99);
+}
+
+.cc-settings-logout button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.cc-settings-logout-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff0f2;
+  color: #e5485d;
+  flex: 0 0 auto;
+}
+
+/* =========================================================
+   CHIT CHAT — MODERN SAVED CONTENT EXPERIENCE
+   ========================================================= */
+
+.cc-settings-overlay {
+  background: rgba(15, 18, 24, 0.58) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 24px;
+}
+
+.cc-settings-drawer {
+  width: min(820px, calc(100vw - 48px)) !important;
+  max-height: min(88vh, 900px);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 24px !important;
+  background: #ffffff !important;
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.22),
+    0 8px 28px rgba(0, 0, 0, 0.10) !important;
+}
+
+.cc-detail-header {
+  position: relative;
+  min-height: 68px !important;
+  padding: 0 22px !important;
+  display: grid !important;
+  grid-template-columns: 42px 1fr 42px;
+  align-items: center;
+  border-bottom: 1px solid #eceef2 !important;
+  background: rgba(255, 255, 255, 0.96);
+  z-index: 5;
+}
+
+.cc-detail-header h2 {
+  margin: 0 !important;
+  text-align: center;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em;
+  color: #15171c;
+}
+
+.cc-detail-header > button {
+  width: 38px !important;
+  height: 38px !important;
+  padding: 0 !important;
+  border: 1px solid #e4e6eb !important;
+  border-radius: 50% !important;
+  background: #f7f8fa !important;
+  color: #20232a !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.cc-detail-header > button:hover {
+  background: #eef0f4 !important;
+  border-color: #d9dce3 !important;
+  transform: scale(1.04);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.cc-detail-header > button:active {
+  transform: scale(0.96);
+}
+
+.cc-detail-header > span {
+  width: 42px;
+}
+
+.cc-detail-body {
+  padding: 0 !important;
+  overflow-y: auto;
+  max-height: calc(min(88vh, 900px) - 68px);
+  scrollbar-width: thin;
+  scrollbar-color: #cfd3da transparent;
+}
+
+/* Saved content */
+
+.cc-saved-content {
+  width: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.cc-saved-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+
+.cc-saved-card {
+  position: relative;
+  display: block !important;
+  width: 100% !important;
+  min-width: 0;
+  aspect-ratio: 1 / 1;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden;
+  border: 0 !important;
+  outline: none;
+  border-radius: 14px !important;
+  background: #f1f2f5 !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  text-align: left;
+  isolation: isolate;
+  transform: translateZ(0);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.cc-saved-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.62) 0%,
+    rgba(0, 0, 0, 0.16) 34%,
+    rgba(0, 0, 0, 0) 64%
+  );
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.cc-saved-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.14) !important;
+}
+
+.cc-saved-card:hover::after {
+  opacity: 1;
+}
+
+.cc-saved-card:active {
+  transform: scale(0.985);
+}
+
+.cc-saved-media {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden;
+  background: #eef0f3;
+}
+
+.cc-saved-media img,
+.cc-saved-media video {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  transition: transform 350ms ease;
+}
+
+.cc-saved-card:hover .cc-saved-media img,
+.cc-saved-card:hover .cc-saved-media video {
+  transform: scale(1.035);
+}
+
+.cc-saved-card-info {
+  position: absolute !important;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 4;
+  padding: 34px 12px 12px !important;
+  color: #ffffff;
+  opacity: 0;
+  transform: translateY(5px);
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+  pointer-events: none;
+}
+
+.cc-saved-card:hover .cc-saved-card-info {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.cc-saved-card-info strong {
+  display: block;
+  margin: 0;
+  color: #ffffff !important;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+}
+
+.cc-saved-card-info p {
+  margin: 4px 0 0 !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: 11px;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cc-saved-video-badge {
+  position: absolute !important;
+  top: 10px;
+  right: 10px;
+  z-index: 5;
+  width: 30px;
+  height: 30px;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 50%;
+  background: rgba(15, 17, 22, 0.68);
+  color: #ffffff;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
+.cc-saved-no-media {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ba1ab;
+  background:
+    radial-gradient(circle at 30% 20%, #f8f9fb, #e9ebef);
+}
+
+.cc-saved-no-media svg {
+  width: 32px;
+  height: 32px;
+  stroke-width: 1.7;
+}
+
+/* Empty saved state */
+
+.cc-saved-state {
+  min-height: 320px;
+  padding: 48px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #1c1f26;
+}
+
+.cc-saved-state > svg {
+  width: 54px;
+  height: 54px;
+  padding: 13px;
+  margin-bottom: 18px;
+  box-sizing: border-box;
+  border: 1px solid #e4e6eb;
+  border-radius: 18px;
+  background: #f7f8fa;
+  color: #555b66;
+  stroke-width: 1.6;
+}
+
+.cc-saved-state strong {
+  max-width: 360px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.cc-saved-state p {
+  max-width: 360px;
+  margin: 8px 0 0;
+  color: #777d87;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Make the generic empty state fit the modern Saved panel */
+
+.cc-settings-drawer .cc-empty-setting {
+  min-height: 320px;
+  margin: 0 !important;
+  padding: 48px 24px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+.cc-settings-drawer .cc-empty-setting-icon {
+  width: 62px !important;
+  height: 62px !important;
+  margin-bottom: 18px !important;
+  border-radius: 20px !important;
+  border: 1px solid #e5e7ec !important;
+  background: #f7f8fa !important;
+  color: #555b66 !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+}
+
+.cc-settings-drawer .cc-empty-setting-icon svg {
+  stroke-width: 1.65;
+}
+
+.cc-settings-drawer .cc-permission-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 76px;
+  padding: 14px 20px;
+  border-bottom: 1px solid #eef0f4;
+  background: #fff;
+}
+
+.cc-settings-drawer .cc-permission-row:last-child {
+  border-bottom: 0;
+}
+
+.cc-settings-drawer .cc-permission-icon {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  flex: 0 0 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #e7e9ef;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #fafbff, #f1f3f8);
+  color: #5f636f;
+  box-shadow:
+    0 4px 12px rgba(15, 23, 42, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.cc-settings-drawer .cc-permission-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.cc-settings-drawer .cc-permission-copy strong {
+  display: block;
+  margin: 0;
+  color: #17191f;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.cc-settings-drawer .cc-permission-copy p {
+  margin: 4px 0 0;
+  color: #7a808c;
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+.cc-settings-drawer .cc-permission-status {
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  border: 1px solid #e6e9ee;
+  border-radius: 999px;
+  background: #f7f8fa;
+  color: #737985;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+@media (max-width: 680px) {
+  .cc-settings-drawer .cc-permission-row {
+    gap: 12px;
+    min-height: 70px;
+    padding: 12px 16px;
+  }
+
+  .cc-settings-drawer .cc-permission-icon {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    flex-basis: 38px;
+    border-radius: 12px;
+  }
+
+  .cc-settings-drawer .cc-permission-copy strong {
+    font-size: 13.5px;
+  }
+
+  .cc-settings-drawer .cc-permission-copy p {
+    font-size: 11.5px;
+  }
+
+  .cc-settings-drawer .cc-permission-status {
+    display: none;
+  }
+}
+
+.cc-settings-drawer .cc-empty-setting > strong {
+  display: block;
+  max-width: 520px;
+  margin: 0;
+  font-size: 18px !important;
+  line-height: 1.35 !important;
+  font-weight: 700 !important;
+  color: #15171c !important;
+  text-align: center;
+}
+
+.cc-settings-drawer .cc-empty-setting > p {
+  max-width: 520px;
+  margin: 8px auto 0;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  font-weight: 400 !important;
+  color: #777d87 !important;
+  text-align: center;
+}
+
+
+/* Mobile */
+
+@media (max-width: 680px) {
+  .cc-settings-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .cc-settings-drawer {
+    width: 100% !important;
+    max-height: 92vh;
+    border-radius: 24px 24px 0 0 !important;
+  }
+
+  .cc-detail-header {
+    min-height: 64px !important;
+    padding: 0 16px !important;
+    grid-template-columns: 40px 1fr 40px;
+  }
+
+  .cc-detail-header h2 {
+    font-size: 17px !important;
+  }
+
+  .cc-saved-content {
+    padding: 12px;
+  }
+
+  .cc-saved-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .cc-saved-card {
+    border-radius: 12px !important;
+  }
+
+  .cc-saved-card-info {
+    opacity: 1;
+    transform: none;
+    padding: 28px 10px 9px !important;
+  }
+
+  .cc-saved-card::after {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cc-saved-card,
+  .cc-saved-media img,
+  .cc-saved-media video,
+  .cc-saved-card-info,
+  .cc-detail-header > button {
+    transition: none !important;
+  }
+}
+
+
+/* Password & security */
+
+.cc-password-panel {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 8px 4px 28px;
+}
+
+.cc-password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cc-password-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.cc-password-field > label {
+  color: #17191f;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cc-password-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.cc-password-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 48px 0 14px;
+  border: 1px solid #e1e4e9;
+  border-radius: 13px;
+  outline: none;
+  background: #fff;
+  color: #17191f;
+  font-size: 14px;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+  box-sizing: border-box;
+}
+
+.cc-password-input::placeholder {
+  color: #9aa0aa;
+}
+
+.cc-password-input:focus {
+  border-color: #aeb4bf;
+  box-shadow: 0 0 0 3px rgba(100, 108, 122, 0.08);
+}
+
+.cc-password-toggle {
+  position: absolute;
+  right: 7px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #737985;
+  cursor: pointer;
+}
+
+.cc-password-toggle:hover {
+  background: #f4f5f7;
+  color: #343840;
+}
+
+.cc-password-toggle svg {
+  stroke-width: 1.8;
+}
+
+.cc-password-hint {
+  margin: -4px 0 2px;
+  color: #858b96;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.cc-password-feedback {
+  padding: 11px 13px;
+  border-radius: 11px;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.cc-password-feedback-error {
+  border: 1px solid #f1d5d5;
+  background: #fff7f7;
+  color: #a33a3a;
+}
+
+.cc-password-feedback-success {
+  border: 1px solid #d7eadc;
+  background: #f5fbf6;
+  color: #317044;
+}
+
+.cc-password-submit {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 4px;
+  border: 0;
+  border-radius: 13px;
+  background: #17191f;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.cc-password-submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.cc-password-submit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 680px) {
+  .cc-password-panel {
+    padding: 4px 0 24px;
+  }
+
+  .cc-password-input {
+    height: 46px;
+  }
+
+  .cc-password-submit {
+    min-height: 46px;
+  }
+}
+
+
+/* Modern password visibility controls */
+.cc-password-input-wrap > button,
+.cc-password-input-wrap button {
+  position: absolute;
+  top: 50%;
+  right: 7px;
+  transform: translateY(-50%);
+
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  padding: 0;
+
+  display: grid;
+  place-items: center;
+
+  border: 0 !important;
+  outline: 0;
+  border-radius: 10px;
+
+  background: transparent !important;
+  color: #6f7480;
+
+  box-shadow: none !important;
+  appearance: none;
+  -webkit-appearance: none;
+
+  cursor: pointer;
+
+  transition:
+    background 0.16s ease,
+    color 0.16s ease,
+    transform 0.16s ease;
+}
+
+.cc-password-input-wrap > button:hover,
+.cc-password-input-wrap button:hover {
+  background: #f1f2f5 !important;
+  color: #202329;
+  transform: translateY(-50%);
+}
+
+.cc-password-input-wrap > button:active,
+.cc-password-input-wrap button:active {
+  background: #e9ebef !important;
+  transform: translateY(-50%) scale(0.96);
+}
+
+.cc-password-input-wrap > button:focus-visible,
+.cc-password-input-wrap button:focus-visible {
+  box-shadow: 0 0 0 3px rgba(80, 86, 98, 0.12) !important;
+}
+
+.cc-password-input-wrap > button svg,
+.cc-password-input-wrap button svg {
+  width: 19px;
+  height: 19px;
+  stroke-width: 1.8;
+}
+
+/* Keep the password text clear of the visibility icon */
+.cc-password-input-wrap input {
+  padding-right: 50px !important;
+}
+
+/* Modern password fields */
+.cc-password-input-wrap input {
+  width: 100%;
+  height: 48px;
+  box-sizing: border-box;
+
+  border: 1px solid #e1e4e9 !important;
+  border-radius: 13px !important;
+
+  background: #fff !important;
+  color: #17191f;
+
+  outline: none;
+
+  font-size: 14px;
+
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.cc-password-input-wrap input:hover {
+  border-color: #cfd3da !important;
+}
+
+.cc-password-input-wrap input:focus {
+  border-color: #9ea4ae !important;
+  box-shadow: 0 0 0 3px rgba(80, 86, 98, 0.08) !important;
+}
+
+
+/* Mobile settings drawer: keep it above the bottom navigation */
+@media (max-width: 680px) {
+  .cc-settings-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .cc-settings-drawer {
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(100dvh - 88px);
+    margin-bottom: 82px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-radius: 24px 24px 0 0;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+
+/* Mobile password & security panel polish */
+@media (max-width: 680px) {
+  .cc-settings-drawer {
+    max-height: calc(100dvh - 82px);
+    margin-bottom: 82px;
+  }
+
+  .cc-settings-drawer .cc-password-panel {
+    padding: 24px 20px 28px;
+  }
+
+  .cc-settings-drawer .cc-password-panel > svg {
+    width: 26px;
+    height: 26px;
+    margin-bottom: 10px;
+    stroke-width: 1.8;
+  }
+
+  .cc-settings-drawer .cc-password-panel h3 {
+    margin: 0 0 4px;
+    font-size: 17px;
+    line-height: 1.3;
+  }
+
+  .cc-settings-drawer .cc-password-panel > p {
+    margin: 0 0 16px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #777d87;
+  }
+
+  .cc-settings-drawer .cc-password-field {
+    margin-bottom: 14px;
+  }
+
+  .cc-settings-drawer .cc-password-field label {
+    display: block;
+    margin-bottom: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #30333a;
+  }
+
+  .cc-settings-drawer .cc-password-input-wrap {
+    position: relative;
+    width: 100%;
+  }
+
+  .cc-settings-drawer .cc-password-input-wrap input {
+    height: 46px;
+    width: 100%;
+    padding: 0 48px 0 14px !important;
+    border-radius: 13px !important;
+    box-sizing: border-box;
+  }
+
+  .cc-settings-drawer .cc-password-input-wrap button {
+    position: absolute;
+    right: 7px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: #737985;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+  }
+
+  .cc-settings-drawer .cc-password-input-wrap button:hover {
+    background: #f3f4f7;
+    color: #17191f;
+  }
+
+  .cc-settings-drawer .cc-password-input-wrap button svg {
+    width: 18px;
+    height: 18px;
+    stroke-width: 1.8;
+  }
+
+  .cc-settings-drawer .cc-password-hint {
+    margin: 4px 0 16px;
+    font-size: 11.5px;
+    line-height: 1.4;
+  }
+
+  .cc-settings-drawer .cc-password-submit {
+    min-height: 46px;
+    margin-top: 4px;
+    border-radius: 13px;
+    font-size: 14px;
+  }
+}
+
+
+/* Modern password & security visual treatment */
+.cc-settings-drawer .cc-password-panel > svg {
+  width: 24px;
+  height: 24px;
+  padding: 10px;
+  margin: 0 0 14px;
+  box-sizing: content-box;
+  border: 1px solid #e8eaf0;
+  border-radius: 15px;
+  background: linear-gradient(145deg, #fafbfc, #f1f3f7);
+  color: #30343c;
+  stroke-width: 1.7;
+  box-shadow:
+    0 5px 14px rgba(15, 23, 42, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.cc-settings-drawer .cc-password-input-wrap button {
+  width: 36px;
+  height: 36px;
+  right: 6px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  background: transparent;
+  color: #747b88;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease,
+    transform 0.16s ease;
+}
+
+.cc-settings-drawer .cc-password-input-wrap button:hover {
+  border-color: #e4e7ed;
+  background: #f6f7f9;
+  color: #242832;
+}
+
+.cc-settings-drawer .cc-password-input-wrap button:active {
+  transform: translateY(-50%) scale(0.94);
+}
+
+.cc-settings-drawer .cc-password-input-wrap button svg {
+  width: 19px;
+  height: 19px;
+  stroke-width: 1.8;
+}
+
+.cc-settings-drawer .cc-password-input-wrap input {
+  border: 1px solid #e4e7ed !important;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.025);
+}
+
+.cc-settings-drawer .cc-password-input-wrap input:focus {
+  border-color: #cfd4dc !important;
+  box-shadow:
+    0 0 0 3px rgba(80, 86, 98, 0.07),
+    inset 0 1px 2px rgba(15, 23, 42, 0.025);
+}
+
+@media (max-width: 680px) {
+  .cc-settings-drawer .cc-password-panel > svg {
+    width: 22px;
+    height: 22px;
+    padding: 9px;
+    margin-bottom: 12px;
+    border-radius: 14px;
+  }
+
+  .cc-settings-drawer .cc-password-input-wrap button {
+    width: 34px;
+    height: 34px;
+    right: 6px;
+  }
+
+  .cc-settings-drawer .cc-password-input-wrap button svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+
+/* =========================================================
+   Password & Security — modern UI refinement
+   ========================================================= */
+
+.cc-settings-drawer .cc-password-panel {
+  color: #17191f;
+}
+
+.cc-settings-drawer .cc-password-panel > svg {
+  width: 42px;
+  height: 42px;
+  margin-bottom: 14px;
+  padding: 9px;
+  box-sizing: border-box;
+  border: 1px solid #e5e7ec;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #fafbff, #f2f4f8);
+  color: #252932;
+  stroke-width: 1.8;
+  box-shadow:
+    0 5px 16px rgba(15, 23, 42, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.cc-settings-drawer .cc-password-panel h3 {
+  letter-spacing: -0.02em;
+}
+
+.cc-settings-drawer .cc-password-input-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.cc-settings-drawer .cc-password-input-wrap input {
+  width: 100%;
+  min-height: 50px;
+  box-sizing: border-box;
+  padding: 0 52px 0 15px !important;
+  border: 1px solid #e1e4ea !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+  color: #17191f;
+  font-size: 14px;
+  line-height: 1.4;
+  outline: none;
+  box-shadow:
+    inset 0 1px 2px rgba(15, 23, 42, 0.025),
+    0 1px 1px rgba(15, 23, 42, 0.02);
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+}
+
+.cc-settings-drawer .cc-password-input-wrap input:hover {
+  border-color: #cfd3da !important;
+}
+
+.cc-settings-drawer .cc-password-input-wrap input:focus {
+  border-color: #aeb4bf !important;
+  background: #fff !important;
+  box-shadow:
+    0 0 0 4px rgba(80, 86, 98, 0.07),
+    inset 0 1px 2px rgba(15, 23, 42, 0.025);
+}
+
+.cc-settings-drawer .cc-password-input-wrap button {
+  width: 36px;
+  height: 36px;
+  right: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: #777e8c;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition:
+    background 0.16s ease,
+    color 0.16s ease,
+    transform 0.16s ease;
+}
+
+.cc-settings-drawer .cc-password-input-wrap button:hover {
+  background: #f3f4f7;
+  color: #20242c;
+}
+
+.cc-settings-drawer .cc-password-input-wrap button:active {
+  transform: translateY(-50%) scale(0.94);
+}
+
+.cc-settings-drawer .cc-password-input-wrap button svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.9;
+}
+
+.cc-settings-drawer .cc-password-hint {
+  color: #858b97;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.cc-settings-drawer .cc-password-submit {
+  min-height: 48px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    opacity 0.16s ease;
+}
+
+.cc-settings-drawer .cc-password-submit:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 7px 18px rgba(15, 23, 42, 0.12);
+}
+
+.cc-settings-drawer .cc-password-submit:not(:disabled):active {
+  transform: translateY(0);
+}
+
+@media (max-width: 680px) {
+
+  .cc-settings-drawer .cc-password-panel > svg {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 12px;
+    padding: 8px;
+    border-radius: 13px;
+  }
+
+  .cc-settings-drawer .cc-password-input-wrap input {
+    min-height: 50px;
+    border-radius: 14px !important;
+  }
+
+  .cc-settings-drawer .cc-password-input-wrap button {
+    width: 34px;
+    height: 34px;
+    right: 6px;
+    border-radius: 10px;
+  }
+
+  .cc-settings-drawer .cc-password-input-wrap button svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .cc-settings-drawer .cc-password-submit {
+    min-height: 48px;
+    border-radius: 14px;
+  }
+}
+
+
+/* Password & Security icon refinement */
+.cc-settings-drawer .cc-password-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 14px;
+  border: 1px solid #e4e7ec;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #fafbff, #f1f3f7);
+  color: #252932;
+  box-shadow:
+    0 6px 16px rgba(15, 23, 42, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.cc-settings-drawer .cc-password-icon svg {
+  width: 23px;
+  height: 23px;
+  stroke-width: 1.8;
+}
+
+.cc-settings-drawer .cc-password-visibility {
+  color: #737b89;
+}
+
+.cc-settings-drawer .cc-password-visibility:hover {
+  color: #20242c;
+  background: #f3f4f7;
+}
+
+.cc-settings-drawer .cc-password-visibility svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.8;
+}
+
+@media (max-width: 680px) {
+  .cc-settings-drawer .cc-password-icon {
+    width: 42px;
+    height: 42px;
+    margin-bottom: 12px;
+    border-radius: 13px;
+  }
+
+  .cc-settings-drawer .cc-password-icon svg {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+
+/* =========================================================
+   Account information — modern settings panel
+   ========================================================= */
+
+.cc-settings-drawer .cc-account-info-panel {
+  width: 100%;
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 28px 24px 34px;
+  box-sizing: border-box;
+}
+
+.cc-settings-drawer .cc-account-info-intro {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.cc-settings-drawer .cc-account-info-intro-icon {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #e5e8ee;
+  border-radius: 15px;
+  background: linear-gradient(145deg, #fafbff, #f1f3f8);
+  color: #3f4652;
+  box-shadow:
+    0 5px 14px rgba(15, 23, 42, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.cc-settings-drawer .cc-account-info-intro strong {
+  display: block;
+  margin: 0;
+  color: #17191f;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.cc-settings-drawer .cc-account-info-intro p {
+  margin: 4px 0 0;
+  color: #7a808c;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.cc-settings-drawer .cc-account-info-list {
+  overflow: hidden;
+  border: 1px solid #e7e9ee;
+  border-radius: 17px;
+  background: #fff;
+  box-shadow:
+    0 7px 20px rgba(15, 23, 42, 0.045),
+    0 1px 2px rgba(15, 23, 42, 0.025);
+}
+
+.cc-settings-drawer .cc-account-info-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 76px;
+  padding: 14px 17px;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+.cc-settings-drawer .cc-account-info-row + .cc-account-info-row {
+  border-top: 1px solid #eef0f4;
+}
+
+.cc-settings-drawer .cc-account-info-icon {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  flex: 0 0 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #e7e9ef;
+  border-radius: 13px;
+  background: #f7f8fa;
+  color: #5d6470;
+}
+
+.cc-settings-drawer .cc-account-info-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.cc-settings-drawer .cc-account-info-copy span {
+  display: block;
+  margin: 0 0 4px;
+  color: #7a808c;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+}
+
+.cc-settings-drawer .cc-account-info-copy strong {
+  display: block;
+  overflow: hidden;
+  margin: 0;
+  color: #17191f;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cc-settings-drawer .cc-account-info-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 16px 2px 0;
+  color: #7a808c;
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.cc-settings-drawer .cc-account-info-note svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: #8a909b;
+}
+
+@media (max-width: 680px) {
+  .cc-settings-drawer .cc-account-info-panel {
+    padding: 22px 16px 30px;
+  }
+
+  .cc-settings-drawer .cc-account-info-intro {
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .cc-settings-drawer .cc-account-info-intro-icon {
+    width: 42px;
+    height: 42px;
+    flex-basis: 42px;
+    border-radius: 13px;
+  }
+
+  .cc-settings-drawer .cc-account-info-intro strong {
+    font-size: 15px;
+  }
+
+  .cc-settings-drawer .cc-account-info-intro p {
+    font-size: 11.5px;
+  }
+
+  .cc-settings-drawer .cc-account-info-list {
+    border-radius: 15px;
+  }
+
+  .cc-settings-drawer .cc-account-info-row {
+    min-height: 70px;
+    gap: 12px;
+    padding: 12px 14px;
+  }
+
+  .cc-settings-drawer .cc-account-info-icon {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    flex-basis: 38px;
+    border-radius: 12px;
+  }
+
+  .cc-settings-drawer .cc-account-info-copy strong {
+    font-size: 13.5px;
+  }
+
+  .cc-settings-drawer .cc-account-info-note {
+    margin-top: 14px;
+    font-size: 11px;
+  }
+}
+

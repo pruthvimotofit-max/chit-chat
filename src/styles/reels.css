@@ -1,0 +1,1476 @@
+.reels-page {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  color: #fff;
+  overflow: hidden;
+}
+
+.reels-header {
+  position: fixed;
+  top: 0;
+  left: var(--cc-sidebar);
+  right: 0;
+  height: 72px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.reels-header h1 {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+
+.reels-camera-button {
+  position: absolute;
+  right: 24px;
+  top: 18px;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  pointer-events: auto;
+}
+
+.reels-feed {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.reels-feed::-webkit-scrollbar {
+  display: none;
+}
+
+.reels-item {
+  position: relative;
+  flex: 0 0 100vh;
+  width: min(760px, 100%);
+  scroll-snap-align: start;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 75px 20px 20px;
+}
+
+.reels-video-container {
+  position: relative;
+  height: min(88vh, 820px);
+  width: min(462px, 100%);
+  aspect-ratio: 9 / 16;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #111;
+  box-shadow: 0 25px 90px rgba(0, 0, 0, 0.7);
+}
+
+.reels-video {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  background: #111;
+  cursor: pointer;
+}
+
+.reels-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.18),
+      transparent 25%,
+      transparent 58%,
+      rgba(0, 0, 0, 0.82) 100%
+    );
+}
+
+.reels-mute-button {
+  position: absolute;
+  top: 17px;
+  right: 17px;
+  z-index: 5;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.48);
+  backdrop-filter: blur(12px);
+}
+
+.reels-play-button {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 70px;
+  height: 70px;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(12px);
+  z-index: 6;
+}
+
+.reels-info {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 20px;
+  z-index: 5;
+}
+
+.reels-profile-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.reels-avatar {
+  width: 39px;
+  height: 39px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #fff;
+}
+
+.reels-username {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.reels-dot {
+  opacity: 0.75;
+}
+
+.reels-follow-button {
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  background: transparent;
+  color: #fff;
+  border-radius: 7px;
+  padding: 5px 11px;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.reels-caption {
+  margin: 10px 0 7px;
+  max-width: 370px;
+  font-size: 14px;
+  line-height: 1.42;
+}
+
+.reels-audio {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  opacity: 0.94;
+}
+
+.reels-music {
+  font-size: 17px;
+}
+
+.reels-desktop-actions {
+  position: absolute;
+  right: 12px;
+  bottom: 80px;
+  z-index: 10;
+}
+
+.reels-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+}
+
+.reels-action {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  min-width: 42px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.reels-action.liked {
+  color: #ff3040;
+}
+
+.reels-action.saved {
+  color: #fff;
+}
+
+.reels-more {
+  margin-top: 2px;
+}
+
+.reels-mobile-actions {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .reels-page {
+    position: fixed;
+    inset: 0;
+  }
+
+  .reels-header {
+    left: 0;
+    height: 60px;
+  }
+
+  .reels-header h1 {
+    font-size: 19px;
+  }
+
+  .reels-camera-button {
+    top: 11px;
+    right: 13px;
+  }
+
+  .reels-item {
+    width: 100%;
+    padding: 0;
+  }
+
+  .reels-video-container {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    max-height: none;
+  }
+
+  .reels-desktop-actions {
+    display: none;
+  }
+
+  .reels-mobile-actions {
+    display: block;
+    position: absolute;
+    right: 13px;
+    bottom: 105px;
+    z-index: 10;
+  }
+
+  .reels-actions {
+    gap: 20px;
+  }
+
+  .reels-action svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .reels-info {
+    left: 15px;
+    right: 70px;
+    bottom: 88px;
+  }
+
+  .reels-caption {
+    max-width: none;
+    font-size: 13px;
+  }
+
+  .reels-audio {
+    font-size: 11px;
+  }
+
+  .reels-mute-button {
+    top: 62px;
+    right: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .reels-info {
+    bottom: 82px;
+  }
+
+  .reels-mobile-actions {
+    bottom: 102px;
+  }
+
+  .reels-avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .reels-follow-button {
+    padding: 5px 10px;
+  }
+}
+/* =========================================================
+   REEL COMMENTS — social STYLE
+   ========================================================= */
+
+.reels-comments-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.reels-comments-panel {
+  width: min(430px, 100%);
+  height: 100%;
+  background: #ffffff;
+  color: #111111;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 20px 0 0 20px;
+  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.18);
+  animation: reels-comments-in 180ms ease-out;
+}
+
+@keyframes reels-comments-in {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+.reels-comments-handle {
+  display: none;
+}
+
+.reels-comments-header {
+  height: 64px;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border-bottom: 1px solid #efefef;
+}
+
+.reels-comments-header h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.1px;
+}
+
+.reels-comments-close {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #111111;
+  display: grid;
+  place-items: center;
+}
+
+.reels-comments-close:hover {
+  background: #f5f5f5;
+}
+
+.reels-comments-close span {
+  font-size: 27px;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.reels-comments-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 18px 16px 20px;
+  scrollbar-width: thin;
+}
+
+.reels-comments-state {
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: #8e8e8e;
+  text-align: center;
+  font-size: 13px;
+}
+
+.reels-comments-state strong {
+  color: #111111;
+  font-size: 15px;
+}
+
+.reels-empty-comment-icon {
+  width: 58px;
+  height: 58px;
+  border: 1.8px solid #111111;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  margin-bottom: 6px;
+}
+
+.reels-comments-spinner {
+  width: 22px;
+  height: 22px;
+  border: 2px solid #e5e5e5;
+  border-top-color: #111111;
+  border-radius: 50%;
+  animation: reels-comment-spin 700ms linear infinite;
+}
+
+@keyframes reels-comment-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.reels-comment {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin-bottom: 21px;
+}
+
+.reels-comment-avatar {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.reels-comment-avatar-fallback {
+  display: grid;
+  place-items: center;
+  background: #efefef;
+  color: #555555;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.reels-comment-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.reels-comment-content-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.reels-comment-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.42;
+}
+
+.reels-comment-username {
+  color: #111111;
+  font-weight: 700;
+  margin-right: 7px;
+}
+
+.reels-comment-message {
+  color: #262626;
+  word-break: break-word;
+}
+
+.reels-comment-like {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  padding: 0;
+  margin-top: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #737373;
+  display: grid;
+  place-items: center;
+}
+
+.reels-comment-like:hover {
+  background: #f5f5f5;
+}
+
+.reels-comment-like.liked {
+  color: #ed4956;
+}
+
+.reels-comment-meta {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-top: 6px;
+  color: #8e8e8e;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.reels-comment-meta button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #8e8e8e;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.reels-comment-meta button:hover {
+  color: #111111;
+}
+
+.reels-comment-composer {
+  flex: 0 0 auto;
+  background: #ffffff;
+  border-top: 1px solid #efefef;
+  padding: 10px 14px 14px;
+}
+
+.reels-comment-input {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.reels-composer-avatar {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.reels-comment-input input {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  border: 1px solid #dbdbdb;
+  border-radius: 22px;
+  outline: none;
+  background: #fafafa;
+  color: #111111;
+  padding: 0 15px;
+  font-size: 14px;
+}
+
+.reels-comment-input input:focus {
+  border-color: #bcbcbc;
+  background: #ffffff;
+}
+
+.reels-comment-input input::placeholder {
+  color: #8e8e8e;
+}
+
+.reels-comment-input > button {
+  height: 42px;
+  border: 0;
+  padding: 0 5px;
+  background: transparent;
+  color: #0095f6;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.reels-comment-input > button:disabled {
+  color: #b3dffc;
+}
+
+.reels-reply-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 8px;
+  color: #737373;
+  font-size: 11px;
+}
+
+.reels-reply-bar strong {
+  color: #111111;
+}
+
+.reels-reply-bar button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #111111;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* =========================================================
+   MOBILE — BOTTOM SHEET
+   ========================================================= */
+
+@media (max-width: 600px) {
+  .reels-comments-backdrop {
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.28);
+  }
+
+  .reels-comments-panel {
+    width: 100%;
+    height: min(78vh, 720px);
+    border-radius: 18px 18px 0 0;
+    animation: reels-comments-up 180ms ease-out;
+  }
+
+  @keyframes reels-comments-up {
+    from {
+      transform: translateY(100%);
+    }
+
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  .reels-comments-handle {
+    display: block;
+    width: 36px;
+    height: 4px;
+    margin: 8px auto 0;
+    border-radius: 999px;
+    background: #d1d1d1;
+  }
+
+  .reels-comments-header {
+    height: 54px;
+    min-height: 54px;
+  }
+
+  .reels-comments-list {
+    padding: 15px 14px 18px;
+  }
+
+  .reels-comment {
+    gap: 10px;
+    margin-bottom: 19px;
+  }
+
+  .reels-comment-avatar {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+  }
+
+  .reels-comment-text {
+    font-size: 13px;
+  }
+
+  .reels-comment-composer {
+    padding: 9px 12px 12px;
+  }
+
+  .reels-composer-avatar {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+  }
+}
+
+/* =========================================================
+   COMMENT EMOJI PICKER
+   ========================================================= */
+
+.reels-comment-composer {
+  position: relative;
+}
+
+.reels-emoji-picker {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: calc(100% + 8px);
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.16);
+  z-index: 20;
+  animation: reels-emoji-in 120ms ease-out;
+}
+
+@keyframes reels-emoji-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reels-emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 3px;
+  max-height: 190px;
+  overflow-y: auto;
+}
+
+.reels-emoji {
+  width: 100%;
+  aspect-ratio: 1;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  padding: 0;
+  font-size: 23px;
+  display: grid;
+  place-items: center;
+}
+
+.reels-emoji:hover {
+  background: #f2f2f2;
+}
+
+.reels-emoji-toggle {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #737373;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.reels-emoji-toggle:hover,
+.reels-emoji-toggle.active {
+  color: #111111;
+  background: #f2f2f2;
+}
+
+@media (max-width: 600px) {
+  .reels-emoji-picker {
+    left: 10px;
+    right: 10px;
+    bottom: calc(100% + 7px);
+    border-radius: 15px;
+  }
+
+  .reels-emoji-grid {
+    grid-template-columns: repeat(8, 1fr);
+    max-height: 180px;
+  }
+
+  .reels-emoji {
+    font-size: 21px;
+  }
+}
+
+/* =========================
+   REEL COMMENT REPLIES
+   ========================= */
+
+.reels-comment-replies {
+  margin: 10px 0 2px 46px;
+  padding-left: 14px;
+  border-left: 2px solid #eeeeee;
+}
+
+.reels-comment-reply {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 12px 0;
+}
+
+.reels-comment-reply-avatar {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.reels-comment-reply .reels-comment-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.reels-comment-reply .reels-comment-text {
+  display: block;
+  line-height: 1.35;
+}
+
+.reels-comment-reply .reels-comment-username {
+  margin-right: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.reels-comment-reply .reels-comment-message {
+  font-size: 13px;
+  color: #262626;
+  word-break: break-word;
+}
+
+.reels-comment-reply .reels-comment-meta {
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #8a8a8a;
+  font-size: 10px;
+}
+
+@media (max-width: 600px) {
+  .reels-comment-replies {
+    margin-left: 38px;
+    padding-left: 10px;
+  }
+
+  .reels-comment-reply-avatar {
+    width: 26px;
+    height: 26px;
+    flex-basis: 26px;
+  }
+}
+
+
+/* =========================================================
+   REELS DESKTOP LAYOUT — FINAL 9:16 FRAME
+   ========================================================= */
+
+.reels-page {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 0px);
+  min-height: 0;
+  background: #000;
+  overflow: hidden;
+}
+
+.reels-feed {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.reels-feed::-webkit-scrollbar {
+  display: none;
+}
+
+.reels-item {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  flex: 0 0 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+/* The actual vertical Reel frame */
+.reels-item > .reels-card,
+.reels-item .reels-video-container {
+  position: relative;
+  width: min(430px, calc((100vh - 40px) * 9 / 16));
+  height: min(calc(100vh - 40px), 760px);
+  aspect-ratio: 9 / 16;
+  max-height: calc(100vh - 40px);
+
+  overflow: hidden;
+  border-radius: 12px;
+  background: #111;
+}
+
+/* Make the video itself preserve 9:16 */
+.reels-item video,
+.reels-item .reels-video {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 9 / 16;
+  object-fit: cover;
+}
+
+/* Keep the action rail outside the video frame */
+.reels-desktop-actions {
+  position: absolute;
+  left: calc(50% + 235px);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+}
+
+/* Header stays above the feed */
+.reels-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 72px;
+  z-index: 30;
+  pointer-events: none;
+}
+
+.reels-header h1,
+.reels-camera-button {
+  pointer-events: auto;
+}
+
+/* Loading / empty state should not look like a broken giant video */
+.reels-loading {
+  position: absolute;
+  inset: 72px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  background: #000;
+  color: #fff;
+  z-index: 10;
+}
+
+/* =========================================================
+   MOBILE — TRUE FULLSCREEN 9:16 REELS
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .reels-page {
+    height: 100dvh;
+  }
+
+  .reels-feed {
+    height: 100dvh;
+  }
+
+  .reels-item {
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+
+  .reels-item > .reels-card,
+  .reels-item .reels-video-container {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    border-radius: 0;
+    aspect-ratio: auto;
+  }
+
+  .reels-item video,
+  .reels-item .reels-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .reels-desktop-actions {
+    display: none;
+  }
+}
+
+/* =========================================================
+   CHIT CHAT — REEL MORE OPTIONS
+   ========================================================= */
+
+.reels-more-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.58);
+  backdrop-filter: blur(3px);
+}
+
+.reels-more-sheet {
+  width: min(100%, 520px);
+  max-height: min(620px, 88vh);
+  overflow-y: auto;
+  padding: 10px 16px 24px;
+  background: #fff;
+  color: #111318;
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.28);
+  animation: reels-more-sheet-in 180ms ease-out;
+}
+
+.reels-more-handle {
+  width: 42px;
+  height: 4px;
+  margin: 2px auto 14px;
+  border-radius: 999px;
+  background: #d4d5da;
+}
+
+.reels-more-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 2px 16px;
+}
+
+.reels-more-header strong {
+  font-size: 18px;
+  font-weight: 750;
+  letter-spacing: -0.25px;
+}
+
+.reels-more-close {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: #f2f3f6;
+  color: #202228;
+  font-size: 24px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+}
+
+.reels-more-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.reels-more-quick-actions button {
+  min-height: 88px;
+  border: 0;
+  border-radius: 16px;
+  background: #f4f5f8;
+  color: #111318;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.reels-more-quick-actions button:active {
+  transform: scale(0.98);
+}
+
+.reels-more-list {
+  overflow: hidden;
+  border-radius: 16px;
+  background: #f4f5f8;
+}
+
+.reels-more-list button {
+  width: 100%;
+  min-height: 58px;
+  padding: 0 18px;
+  border: 0;
+  border-bottom: 1px solid #e2e3e7;
+  background: transparent;
+  color: #111318;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  text-align: left;
+  font-size: 15px;
+  font-weight: 550;
+}
+
+.reels-more-list button:last-child {
+  border-bottom: 0;
+}
+
+.reels-more-list button:active {
+  background: #e9eaee;
+}
+
+.reels-more-icon {
+  width: 25px;
+  text-align: center;
+  font-size: 20px;
+}
+
+.reels-more-danger {
+  color: #e53935 !important;
+}
+
+@keyframes reels-more-sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 769px) {
+  .reels-more-sheet {
+    width: min(440px, calc(100% - 32px));
+    margin-bottom: 24px;
+    border-radius: 22px;
+  }
+}
+
+/* Keep Reel options above the mobile navigation */
+.reels-more-sheet-backdrop {
+  padding-bottom: 0;
+}
+
+@media (max-width: 768px) {
+  .reels-more-sheet {
+    max-height: calc(100dvh - 48px);
+    padding-bottom: 32px;
+  }
+
+  .reels-more-list {
+    margin-bottom: 4px;
+  }
+}
+
+/* Keep Reel options above the mobile navigation */
+.reels-more-sheet-backdrop {
+  padding-bottom: 0;
+}
+
+@media (max-width: 768px) {
+  .reels-more-sheet {
+    max-height: calc(100dvh - 48px);
+    padding-bottom: 32px;
+  }
+
+  .reels-more-list {
+    margin-bottom: 4px;
+  }
+}
+
+/* Reel options — always above mobile navigation and scrollable */
+.reels-more-sheet-backdrop {
+  z-index: 1000;
+}
+
+.reels-more-sheet {
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(32px + env(safe-area-inset-bottom));
+  scrollbar-width: thin;
+}
+
+@media (max-width: 768px) {
+  .reels-more-sheet {
+    width: 100%;
+    max-height: calc(100dvh - 20px);
+    border-radius: 24px 24px 0 0;
+  }
+}
+
+/* =========================================================
+   COMMENTS — MOBILE SHEET FIX
+   ========================================================= */
+
+@media (max-width: 600px) {
+  .reels-comments-backdrop {
+    z-index: 1000 !important;
+  }
+
+  .reels-comments-panel {
+    position: relative;
+    z-index: 1001;
+    height: min(82dvh, 760px);
+    max-height: calc(100dvh - 20px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .reels-comments-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding-bottom: 12px;
+  }
+
+  .reels-comment-composer {
+    position: relative;
+    z-index: 5;
+    flex: 0 0 auto;
+    background: #fff;
+    border-top: 1px solid #e8e8e8;
+  }
+}
+
+/* =========================================================
+   MOBILE COMMENT COMPOSER — ALWAYS VISIBLE
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+  .reels-comments-panel {
+    display: flex;
+    flex-direction: column;
+    height: min(78vh, 720px);
+    overflow: hidden;
+  }
+
+  .reels-comments-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding-bottom: 90px;
+  }
+
+  .reels-comment-composer {
+    position: relative;
+    z-index: 50;
+    flex: 0 0 auto;
+    width: 100%;
+    min-height: 64px;
+    display: block;
+    background: #ffffff;
+    border-top: 1px solid #eeeeee;
+    padding: 9px 12px 12px;
+  }
+
+  .reels-comment-input {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .reels-comment-input input {
+    display: block;
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    height: 42px;
+  }
+
+  .reels-comment-input > button {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    height: 42px;
+  }
+
+  .reels-composer-avatar {
+    display: block;
+    flex: 0 0 32px;
+  }
+
+  .reels-emoji-toggle {
+    flex: 0 0 auto;
+  }
+}
+
+
+/* =========================================================
+   COMMENTS SHEET — ABOVE MOBILE NAVIGATION
+   ========================================================= */
+
+.reels-comments-backdrop {
+  z-index: 10000;
+}
+
+.reels-comments-panel {
+  position: relative;
+  z-index: 10001;
+}
+
+@media (max-width: 600px) {
+  .reels-comments-backdrop {
+    z-index: 10000;
+  }
+
+  .reels-comments-panel {
+    z-index: 10001;
+  }
+
+  .reels-comment-composer {
+    position: relative;
+    z-index: 10002;
+  }
+}
+
+
+/* =========================================================
+   REEL OPTIONS — MOBILE FINAL LAYOUT
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .reels-more-sheet {
+    max-height: calc(100dvh - 76px);
+    padding: 8px 14px calc(14px + env(safe-area-inset-bottom));
+  }
+
+  .reels-more-handle {
+    margin: 2px auto 10px;
+  }
+
+  .reels-more-header {
+    padding: 2px 2px 12px;
+  }
+
+  .reels-more-quick-actions {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .reels-more-quick-actions button {
+    min-height: 64px;
+    border-radius: 14px;
+  }
+
+  .reels-more-list {
+    border-radius: 14px;
+  }
+
+  .reels-more-list button {
+    min-height: 52px;
+    padding: 0 16px;
+  }
+}
+
+
+/* =========================================================
+   REEL OPTIONS — MOBILE SCROLLABLE SHEET
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .reels-more-sheet {
+    height: 58vh;
+    max-height: 58vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
+  }
+
+  .reels-more-list {
+    padding-bottom: 8px;
+  }
+}
+
+
+/* =========================================================
+   REEL OPTIONS — REAL MOBILE SCROLL AREA
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .reels-more-sheet {
+    height: 58vh;
+    max-height: 58vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 8px 14px calc(10px + env(safe-area-inset-bottom));
+  }
+
+  .reels-more-header {
+    flex: 0 0 auto;
+  }
+
+  .reels-more-quick-actions {
+    flex: 0 0 auto;
+  }
+
+  .reels-more-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
+    scrollbar-width: thin;
+    padding-bottom: 20px;
+  }
+
+  .reels-more-list button {
+    flex: 0 0 auto;
+  }
+}
+
+
+/* =========================================================
+   REEL OPTIONS — SHARE + REPORT QUICK ACTIONS
+   ========================================================= */
+
+.reels-more-report-action {
+  color: #e53935 !important;
+}
+
+.reels-more-report-icon {
+  font-size: 23px;
+  line-height: 1;
+  color: #e53935;
+}

@@ -1,0 +1,45 @@
+import { getPosts, getReels } from "../posts/postService";
+
+export async function getExploreContent(pageSize = 30) {
+  const [posts, reels] = await Promise.all([
+    getPosts(pageSize),
+    getReels(pageSize),
+  ]);
+
+  console.log("EXPLORE POSTS COUNT:", posts.length);
+  console.log("EXPLORE REELS COUNT:", reels.length);
+  console.log("EXPLORE POSTS:", posts);
+  console.log("EXPLORE REELS:", reels);
+
+  console.log("EXPLORE POSTS:", posts);
+  const content = [
+    ...posts.map((post) => ({
+      ...post,
+      exploreType: "post",
+    })),
+    ...reels.map((reel) => ({
+      ...reel,
+      exploreType: "reel",
+    })),
+  ];
+
+  return content
+    .filter((item) => {
+      const media = item.media?.[0];
+
+      return Boolean(
+        media?.url ||
+        item.videoUrl ||
+        item.imageUrl,
+      );
+    })
+    .sort((a, b) => {
+      const aTime =
+        a.createdAt?.toMillis?.() || 0;
+      const bTime =
+        b.createdAt?.toMillis?.() || 0;
+
+      return bTime - aTime;
+    })
+    .slice(0, pageSize);
+}

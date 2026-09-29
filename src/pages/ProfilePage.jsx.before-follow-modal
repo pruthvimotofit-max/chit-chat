@@ -1,0 +1,1015 @@
+import { useEffect, useMemo, useState } from "react";
+import {
+  Bookmark,
+  Camera,
+  Check,
+  Grid3X3,
+  Link as LinkIcon,
+  Menu,
+  MessageCircle,
+  MoreHorizontal,
+  Play,
+  Plus,
+  Repeat2,
+  Send,
+  Settings,
+  Tag,
+  UserPlus,
+  X,
+} from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
+
+import { useAuth } from "../features/auth/AuthProvider";
+import {
+  getUserById,
+  getUserByUsername,
+  updateUserProfile,
+} from "../services/users/userService";
+import {
+  followUser,
+  isFollowing,
+  unfollowUser,
+} from "../services/follows/followService";
+import { getPosts, getReels } from "../services/posts/postService";
+import "../styles/profile.css";
+
+function getInitial(profile) {
+  return (
+    profile?.displayName?.charAt(0)?.toUpperCase() ||
+    profile?.username?.charAt(0)?.toUpperCase() ||
+    "C"
+  );
+}
+
+function getMediaUrl(media) {
+  if (!media) return "";
+  if (typeof media === "string") return media;
+  return media.url || media.downloadURL || media.src || "";
+}
+
+function getPostMedia(post) {
+  if (!Array.isArray(post?.media)) return [];
+  return post.media.map(getMediaUrl).filter(Boolean);
+}
+
+function formatCount(value) {
+  const count = Number(value || 0);
+  if (count < 1000) return String(count);
+  if (count < 1000000) return `${(count / 1000).toFixed(count >= 10000 ? 0 : 1)}K`;
+  return `${(count / 1000000).toFixed(count >= 10000000 ? 0 : 1)}M`;
+}
+
+function ProfileAvatar({ profile, size = "large" }) {
+  return (
+    <div className={`cc-profile-avatar cc-profile-avatar-${size}`}>
+      {profile?.photoURL ? (
+        <img
+          src={profile.photoURL}
+          alt={profile.displayName || profile.username || "Profile"}
+        />
+      ) : (
+        <span>{getInitial(profile)}</span>
+      )}
+    </div>
+  );
+}
+
+function ProfilePage() {
+  const { username } = useParams();
+  const navigate = useNavigate();
+  const { user, profile, loading } = useAuth();
+
+  const [viewedProfile, setViewedProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileError, setProfileError] = useState("");
+
+  const [following, setFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [followError, setFollowError] = useState("");
+
+  const [activeTab, setActiveTab] = useState("posts");
+  const [posts, setPosts] = useState([]);
+  const [videos, setVideos] = useState([]);
+  const [reels, setReels] = useState([]);
+  const [contentLoading, setContentLoading] = useState(true);
+
+  const [selectedMedia, setSelectedMedia] = useState(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState("");
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [shareMessage, setShareMessage] = useState("");
+ const [followListOpen, setFollowListOpen] = useState(false);
+ const [followListType, setFollowListType] = useState("followers");
+ const [followList, setFollowList] = useState([]);
+ const [followListLoading, setFollowListLoading] = useState(false);
+ const [followListError, setFollowListError] = useState("");
+
+  const [editForm, setEditForm] = useState({
+    displayName: "",
+    bio: "",
+    website: "",
+    photoURL: "",
+    isPrivate: false,
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadProfile() {
+      setProfileError("");
+
+      if (!username) {
+        if (!cancelled) {
+          setViewedProfile(profile);
+          setProfileLoading(false);
+        }
+        return;
+      }
+
+      try {
+        setProfileLoading(true);
+        const loadedProfile = await getUserByUsername(username);
+
+        if (!cancelled) setViewedProfile(loadedProfile);
+      } catch (error) {
+        console.error("Failed to load profile:", error);
+        if (!cancelled) {
+          setViewedProfile(null);
+          setProfileError("Profile not found.");
+        }
+      } finally {
+        if (!cancelled) setProfileLoading(false);
+      }
+    }
+
+    if (!loading) loadProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [username, profile, loading]);
+
+  useEffect(() => {
+    if (!viewedProfile) return;
+
+    setEditForm({
+      displayName: viewedProfile.displayName || "",
+      bio: viewedProfile.bio || "",
+      website: viewedProfile.website || "",
+      photoURL: viewedProfile.photoURL || "",
+      isPrivate: Boolean(viewedProfile.isPrivate),
+    });
+  }, [viewedProfile]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadFollowStatus() {
+      if (!user || !viewedProfile || user.uid === viewedProfile.id) {
+        setFollowing(false);
+        return;
+      }
+
+      try {
+        const status = await isFollowing(user.uid, viewedProfile.id);
+        if (!cancelled) setFollowing(status);
+      } catch (error) {
+        console.error("Failed to load follow status:", error);
+      }
+    }
+
+    loadFollowStatus();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, viewedProfile]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadContent() {
+      if (!viewedProfile?.id) {
+        setPosts([]);
+        setVideos([]);
+        setReels([]);
+        setContentLoading(false);
+        return;
+      }
+
+      try {
+        setContentLoading(true);
+
+        const [allPosts, allReels] = await Promise.all([
+          getPosts(50),
+          getReels(50),
+        ]);
+
+        if (cancelled) return;
+
+        const userPosts = allPosts.filter(
+          (post) =>
+            post.authorId === viewedProfile.id &&
+            post.mediaType !== "video",
+        );
+
+        const userVideos = allPosts.filter(
+          (post) =>
+            post.authorId === viewedProfile.id &&
+            post.mediaType === "video",
+        );
+
+        const userReels = allReels.filter(
+          (reel) => reel.authorId === viewedProfile.id,
+        );
+
+        setPosts(userPosts);
+        setVideos(userVideos);
+        setReels(userReels);
+      } catch (error) {
+        console.error("Failed to load profile content:", error);
+        if (!cancelled) {
+          setPosts([]);
+          setVideos([]);
+          setReels([]);
+        }
+      } finally {
+        if (!cancelled) setContentLoading(false);
+      }
+    }
+
+    loadContent();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [viewedProfile]);
+
+  async function handleFollowToggle() {
+    if (!user || !viewedProfile || followLoading) return;
+
+    setFollowLoading(true);
+    setFollowError("");
+
+    const previousFollowing = following;
+    const nextFollowing = !previousFollowing;
+    setFollowing(nextFollowing);
+
+    try {
+      if (nextFollowing) {
+        await followUser(user.uid, viewedProfile.id);
+      } else {
+        await unfollowUser(user.uid, viewedProfile.id);
+      }
+    } catch (error) {
+      console.error("Failed to update follow:", error);
+      setFollowing(previousFollowing);
+      setFollowError("Couldn't update follow status.");
+    } finally {
+      setFollowLoading(false);
+    }
+  }
+
+  async function openFollowList(type) {
+ if (!viewedProfile?.id) return;
+ setFollowListType(type);
+ setFollowListOpen(true);
+ setFollowListLoading(true);
+ setFollowListError("");
+ try {
+ const items = type === "followers" ? await getFollowers(viewedProfile.id) : await getFollowing(viewedProfile.id);
+ const profiles = await Promise.all(items.map(async (item) => {
+ const userId = type === "followers" ? item.followerId : item.followingId;
+ try { return await getUserById(userId); } catch { return null; }
+ }));
+ setFollowList(profiles.filter(Boolean));
+ } catch (error) {
+ console.error("Failed to load follow list:", error);
+ setFollowList([]);
+ setFollowListError("Could not load this list.");
+ } finally {
+ setFollowListLoading(false);
+ }
+ }
+
+ function closeFollowList() {
+ setFollowListOpen(false);
+ setFollowList([]);
+ setFollowListError("");
+ }
+ function openEditProfile() {
+    setEditError("");
+    setMoreOpen(false);
+    setEditOpen(true);
+  }
+
+  function handleEditChange(event) {
+    const { name, value, type, checked } = event.target;
+
+    setEditForm((current) => ({
+      ...current,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  }
+
+  async function handleEditSubmit(event) {
+    event.preventDefault();
+    if (!user || editSaving) return;
+
+    try {
+      setEditSaving(true);
+      setEditError("");
+
+      const updated = await updateUserProfile(user.uid, {
+        displayName: editForm.displayName.trim(),
+        bio: editForm.bio.trim(),
+        website: editForm.website.trim(),
+        photoURL: editForm.photoURL.trim(),
+        isPrivate: editForm.isPrivate,
+      });
+
+      setViewedProfile((current) => ({ ...current, ...updated }));
+      setEditOpen(false);
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+      setEditError("Couldn't save your profile.");
+    } finally {
+      setEditSaving(false);
+    }
+  }
+
+  async function handleShareProfile() {
+    if (!viewedProfile) return;
+
+    const profileUrl = `${window.location.origin}/profile/${viewedProfile.username}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `${viewedProfile.displayName || viewedProfile.username} on Chit Chat`,
+          text: `Check out @${viewedProfile.username} on Chit Chat`,
+          url: profileUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(profileUrl);
+        setShareMessage("Profile link copied");
+      }
+    } catch (error) {
+      if (error?.name !== "AbortError") {
+        try {
+          await navigator.clipboard.writeText(profileUrl);
+          setShareMessage("Profile link copied");
+        } catch {
+          setShareMessage("Couldn't share profile");
+        }
+      }
+    }
+
+    setMoreOpen(false);
+    window.setTimeout(() => setShareMessage(""), 2200);
+  }
+
+  function handleMoreAction() {
+    setMoreOpen((current) => !current);
+  }
+
+  const isOwnProfile = Boolean(
+    user && viewedProfile && user.uid === viewedProfile.id,
+  );
+
+  const activeItems = useMemo(() => {
+    if (activeTab === "videos") return videos;
+    if (activeTab === "reels") return reels;
+    if (activeTab === "tagged") return [];
+    return posts;
+  }, [activeTab, posts, videos, reels]);
+
+  const stats = {
+    posts:
+      viewedProfile?.postsCount ||
+      posts.length + videos.length + reels.length ||
+      0,
+    followers: viewedProfile?.followersCount || 0,
+    following: viewedProfile?.followingCount || 0,
+  };
+
+  if (loading || profileLoading) {
+    return (
+      <main className="cc-profile-page">
+        <div className="cc-profile-loading">
+          <div className="cc-profile-loading-avatar" />
+          <div className="cc-profile-loading-lines">
+            <span />
+            <span />
+            <span />
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (!user || !viewedProfile) {
+    return (
+      <main className="cc-profile-page">
+        <div className="cc-profile-empty-page">
+          <h2>{profileError || "Unable to load profile."}</h2>
+          <button type="button" onClick={() => navigate("/")}>
+            Go home
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="cc-profile-page" onClick={() => moreOpen && setMoreOpen(false)}>
+      <div className="cc-profile-shell">
+        <header className="cc-mobile-profile-topbar">
+          <button
+            type="button"
+            aria-label="Create"
+            onClick={() => navigate("/create")}
+          >
+            <Plus size={30} strokeWidth={2.2} />
+          </button>
+
+          <div className="cc-mobile-username">
+            <strong>{viewedProfile.username}</strong>
+            <span className="cc-status-dot" />
+          </div>
+
+          <div className="cc-mobile-top-actions">
+            <button type="button" aria-label="Activity">
+              <div className="cc-notification-badge">1</div>
+              <UserPlus size={25} />
+            </button>
+            <button
+              type="button"
+              aria-label="Settings"
+              onClick={() => navigate("/settings")}
+            >
+              <Menu size={28} />
+            </button>
+          </div>
+        </header>
+
+        <section className="cc-profile-hero">
+          <div className="cc-profile-avatar-column">
+            <div className="cc-profile-avatar-ring">
+              <ProfileAvatar profile={viewedProfile} size="large" />
+            </div>
+            {isOwnProfile && (
+              <button
+                className="cc-profile-avatar-add"
+                type="button"
+                aria-label="Add profile content"
+                onClick={() => navigate("/create")}
+              >
+                <Plus size={17} strokeWidth={3} />
+              </button>
+            )}
+          </div>
+
+          <div className="cc-profile-main">
+            <div className="cc-profile-identity">
+              <div className="cc-profile-username-row">
+                <h1>{viewedProfile.username}</h1>
+                {viewedProfile.isVerified && (
+                  <span className="cc-profile-verified" title="Verified">
+                    <Check size={12} strokeWidth={3} />
+                  </span>
+                )}
+              </div>
+
+              <div className="cc-profile-desktop-actions">
+                {isOwnProfile ? (
+                  <>
+                    <button
+                      className="cc-profile-action-button"
+                      type="button"
+                      onClick={openEditProfile}
+                    >
+                      Edit profile
+                    </button>
+                    <button
+                      className="cc-profile-action-icon"
+                      type="button"
+                      aria-label="Settings"
+                      onClick={openEditProfile}
+                    >
+                      <Settings size={20} />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      className={`cc-profile-action-button cc-profile-follow ${
+                        following ? "is-following" : ""
+                      }`}
+                      type="button"
+                      onClick={handleFollowToggle}
+                      disabled={followLoading}
+                    >
+                      {followLoading
+                        ? "..."
+                        : following
+                          ? "Following"
+                          : "Follow"}
+                    </button>
+                    <button
+                      className="cc-profile-action-button"
+                      type="button"
+                      onClick={() => navigate("/messages")}
+                    >
+                      Message
+                    </button>
+                  </>
+                )}
+
+                <button
+                  className="cc-profile-action-icon"
+                  type="button"
+                  aria-label="More options"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleMoreAction();
+                  }}
+                >
+                  <MoreHorizontal size={22} />
+                </button>
+
+                {moreOpen && (
+                  <div
+                    className="cc-profile-more-menu"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <button type="button" onClick={handleShareProfile}>
+                      <Send size={17} />
+                      Share profile
+                    </button>
+
+                    {isOwnProfile && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMoreOpen(false);
+                            document
+                              .querySelector(".cc-profile-dashboard")
+                              ?.scrollIntoView({
+                                behavior: "smooth",
+                                block: "center",
+                              });
+                          }}
+                        >
+                          <Play size={17} />
+                          Creator Studio
+                        </button>
+
+                        <button type="button" onClick={() => navigate("/settings")}>
+                          <Settings size={17} />
+                          Settings
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="cc-profile-stats">
+              <button
+                type="button"
+                onClick={() => setActiveTab("posts")}
+              >
+                <strong>{formatCount(stats.posts)}</strong>
+                <span>posts</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => openFollowList("followers")}
+              >
+                <strong>{formatCount(stats.followers)}</strong>
+                <span>followers</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => openFollowList("following")}
+              >
+                <strong>{formatCount(stats.following)}</strong>
+                <span>following</span>
+              </button>
+            </div>
+
+            <div className="cc-profile-bio">
+              <strong>{viewedProfile.displayName || viewedProfile.username}</strong>
+
+              {viewedProfile.bio && <p>{viewedProfile.bio}</p>}
+
+              {viewedProfile.website && (
+                <a
+                  href={
+                    /^https?:\/\//i.test(viewedProfile.website)
+                      ? viewedProfile.website
+                      : `https://${viewedProfile.website}`
+                  }
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <LinkIcon size={15} />
+                  {viewedProfile.website}
+                </a>
+              )}
+
+              <span className="cc-profile-status">
+                {viewedProfile.isPrivate ? "Private account" : "Public account"}
+              </span>
+            </div>
+
+            <div className="cc-profile-mobile-actions">
+              {isOwnProfile ? (
+                <>
+                  <button type="button" onClick={openEditProfile}>
+                    Edit profile
+                  </button>
+                  <button type="button" onClick={handleShareProfile}>
+                    Share profile
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    className={following ? "is-following" : "is-primary"}
+                    type="button"
+                    onClick={handleFollowToggle}
+                    disabled={followLoading}
+                  >
+                    {followLoading
+                      ? "..."
+                      : following
+                        ? "Following"
+                        : "Follow"}
+                  </button>
+                  <button type="button" onClick={() => navigate("/messages")}>
+                    Message
+                  </button>
+                  <button type="button" onClick={handleShareProfile}>
+                    Share
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="cc-profile-tools">
+          <button className="cc-profile-dashboard" type="button">
+            <strong>Creator Studio</strong>
+            <span>↗ Track your content, audience and growth.</span>
+          </button>
+
+          <div className="cc-profile-highlights">
+            <button
+              className="cc-profile-highlight cc-profile-highlight-new"
+              type="button"
+              onClick={() => navigate("/create?type=story")}
+            >
+              <span className="cc-highlight-circle">
+                <Plus size={30} strokeWidth={1.8} />
+              </span>
+              <strong>New</strong>
+            </button>
+
+            <button className="cc-profile-highlight" type="button">
+              <span className="cc-highlight-circle cc-highlight-placeholder">
+                <Bookmark size={24} />
+              </span>
+              <strong>Highlights</strong>
+            </button>
+
+            <button className="cc-profile-highlight" type="button">
+              <span className="cc-highlight-circle cc-highlight-placeholder">
+                <Camera size={24} />
+              </span>
+              <strong>Highlights</strong>
+            </button>
+
+            <button className="cc-profile-highlight" type="button">
+              <span className="cc-highlight-circle cc-highlight-placeholder">
+                <Play size={24} />
+              </span>
+              <strong>Highlights</strong>
+            </button>
+          </div>
+        </section>
+
+        {followError && !isOwnProfile && (
+          <p className="cc-profile-action-error">{followError}</p>
+        )}
+
+        {shareMessage && (
+          <div className="cc-profile-toast">
+            <Check size={15} />
+            {shareMessage}
+          </div>
+        )}
+
+        <nav className="cc-profile-tabs" aria-label="Profile content">
+          <button
+            className={activeTab === "posts" ? "active" : ""}
+            type="button"
+            onClick={() => setActiveTab("posts")}
+          >
+            <Grid3X3 size={22} />
+            <span>Posts</span>
+          </button>
+
+          <button
+            className={activeTab === "videos" ? "active" : ""}
+            type="button"
+            onClick={() => setActiveTab("videos")}
+          >
+            <Play size={22} />
+            <span>Videos</span>
+          </button>
+
+          <button
+            className={activeTab === "reels" ? "active" : ""}
+            type="button"
+            onClick={() => setActiveTab("reels")}
+          >
+            <Repeat2 size={22} />
+            <span>Reels</span>
+          </button>
+
+          <button
+            className={activeTab === "tagged" ? "active" : ""}
+            type="button"
+            onClick={() => setActiveTab("tagged")}
+          >
+            <Tag size={22} />
+            <span>Tagged</span>
+          </button>
+        </nav>
+
+        <section className="cc-profile-content">
+          {contentLoading ? (
+            <div className="cc-profile-content-loading">
+              {Array.from({ length: 9 }).map((_, index) => (
+                <span key={index} />
+              ))}
+            </div>
+          ) : activeItems.length === 0 ? (
+            <div className="cc-profile-empty-content">
+              {activeTab === "tagged" ? (
+                <>
+                  <div className="cc-profile-empty-icon">
+                    <Tag size={28} />
+                  </div>
+                  <h2>Photos of you</h2>
+                  <p>Tagged photos and videos will appear here.</p>
+                </>
+              ) : (
+                <>
+                  <div className="cc-profile-empty-icon">
+                    {activeTab === "videos" ? (
+                      <Play size={30} />
+                    ) : activeTab === "reels" ? (
+                      <Repeat2 size={30} />
+                    ) : (
+                      <Camera size={30} />
+                    )}
+                  </div>
+
+                  <h2>
+                    {activeTab === "videos"
+                      ? "No videos yet"
+                      : activeTab === "reels"
+                        ? "No reels yet"
+                        : "No posts yet"}
+                  </h2>
+
+                  <p>
+                    {isOwnProfile
+                      ? "Share your first moment with the community."
+                      : "This profile hasn't shared anything yet."}
+                  </p>
+
+                  {isOwnProfile && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        navigate(
+                          activeTab === "reels"
+                            ? "/create?type=reel"
+                            : activeTab === "videos"
+                              ? "/create?type=video"
+                              : "/create",
+                        )
+                      }
+                    >
+                      Create
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="cc-profile-grid">
+              {activeItems.flatMap((item) => {
+                const media = getPostMedia(item);
+
+                return media.map((url, index) => {
+                  const isVideo =
+                    item.mediaType === "video" || item.postType === "reel";
+
+                  return (
+                    <button
+                      className="cc-profile-grid-item"
+                      type="button"
+                      key={`${item.id}-${index}`}
+                      onClick={() =>
+                        setSelectedMedia({
+                          url,
+                          type: isVideo ? "video" : "image",
+                          caption: item.caption || "",
+                          username: viewedProfile.username,
+                        })
+                      }
+                    >
+                      {isVideo ? (
+                        <video
+                          src={url}
+                          muted
+                          playsInline
+                          preload="metadata"
+                          aria-label={item.caption || "Video"}
+                        />
+                      ) : (
+                        <img src={url} alt={item.caption || "Post"} />
+                      )}
+
+                      {isVideo && (
+                        <span className="cc-profile-grid-video">
+                          <Play size={16} fill="currentColor" />
+                        </span>
+                      )}
+                    </button>
+                  );
+                });
+              })}
+            </div>
+          )}
+        </section>
+      </div>
+
+      {selectedMedia && (
+        <div
+          className="cc-profile-media-modal"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setSelectedMedia(null)}
+        >
+          <button
+            className="cc-profile-modal-close"
+            type="button"
+            aria-label="Close"
+            onClick={() => setSelectedMedia(null)}
+          >
+            <X size={27} />
+          </button>
+
+          <div
+            className="cc-profile-media-viewer"
+            onClick={(event) => event.stopPropagation()}
+          >
+            {selectedMedia.type === "video" ? (
+              <video
+                src={selectedMedia.url}
+                controls
+                autoPlay
+                playsInline
+              />
+            ) : (
+              <img
+                src={selectedMedia.url}
+                alt={selectedMedia.caption || "Post"}
+              />
+            )}
+
+            <div className="cc-profile-media-caption">
+              <strong>@{selectedMedia.username}</strong>
+              {selectedMedia.caption && <span>{selectedMedia.caption}</span>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editOpen && (
+        <div
+          className="cc-profile-edit-overlay"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => !editSaving && setEditOpen(false)}
+        >
+          <div
+            className="cc-profile-edit-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header>
+              <h2>Edit profile</h2>
+              <button
+                type="button"
+                aria-label="Close"
+                onClick={() => !editSaving && setEditOpen(false)}
+              >
+                <X size={22} />
+              </button>
+            </header>
+
+            <form onSubmit={handleEditSubmit}>
+              <div className="cc-profile-edit-avatar">
+                {editForm.photoURL ? (
+                  <img src={editForm.photoURL} alt="Profile" />
+                ) : (
+                  <span>{getInitial(viewedProfile)}</span>
+                )}
+              </div>
+
+              <label>
+                <span>Name</span>
+                <input
+                  name="displayName"
+                  value={editForm.displayName}
+                  onChange={handleEditChange}
+                  maxLength={80}
+                  required
+                />
+              </label>
+
+              <label>
+                <span>Profile photo URL</span>
+                <input
+                  name="photoURL"
+                  value={editForm.photoURL}
+                  onChange={handleEditChange}
+                  placeholder="https://..."
+                  type="url"
+                />
+              </label>
+
+              <label>
+                <span>Bio</span>
+                <textarea
+                  name="bio"
+                  value={editForm.bio}
+                  onChange={handleEditChange}
+                  maxLength={150}
+                  rows={4}
+                />
+              </label>
+
+              <label>
+                <span>Website</span>
+                <input
+                  name="website"
+                  value={editForm.website}
+                  onChange={handleEditChange}
+                  placeholder="https://..."
+                />
+              </label>
+
+              <label className="cc-profile-private-toggle">
+                <span>
+                  <strong>Private account</strong>
+                  <small>Only approved followers can see your content.</small>
+                </span>
+                <input
+                  name="isPrivate"
+                  type="checkbox"
+                  checked={editForm.isPrivate}
+                  onChange={handleEditChange}
+                />
+              </label>
+
+              {editError && <p className="cc-profile-edit-error">{editError}</p>}
+
+              <button
+                className="cc-profile-save-button"
+                type="submit"
+                disabled={editSaving}
+              >
+                {editSaving ? "Saving..." : "Save changes"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+    </main>
+  );
+}
+
+export default ProfilePage;
