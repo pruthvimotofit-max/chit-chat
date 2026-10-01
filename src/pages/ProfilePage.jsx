@@ -7,6 +7,7 @@ import {
   Link as LinkIcon,
   Menu,
   MoreHorizontal,
+  Pin,
   Play,
   Plus,
   Repeat2,
@@ -33,6 +34,7 @@ import {
   unfollowUser,
 } from "../services/follows/followService";
 import { getPosts, getReels } from "../services/posts/postService";
+import ProfilePostViewer from "../components/social/ProfilePostViewer";
 import "../styles/profile.css";
 
 function getInitial(profile) {
@@ -99,7 +101,7 @@ const [followLoading, setFollowLoading] = useState(false);
   const [reels, setReels] = useState([]);
   const [contentLoading, setContentLoading] = useState(true);
 
-  const [selectedMedia, setSelectedMedia] = useState(null);
+  const [selectedPost, setSelectedPost] = useState(null);
   const [editOpen, setEditOpen] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState("");
@@ -424,10 +426,36 @@ const [followLoading, setFollowLoading] = useState(false);
   );
 
   const activeItems = useMemo(() => {
-    if (activeTab === "videos") return videos;
-    if (activeTab === "reels") return reels;
-    if (activeTab === "tagged") return [];
-    return posts;
+    let items;
+
+    if (activeTab === "videos") {
+      items = videos;
+    } else if (activeTab === "reels") {
+      items = reels;
+    } else if (activeTab === "tagged") {
+      return [];
+    } else {
+      items = posts;
+    }
+
+    return [...items].sort((a, b) => {
+      const aPinned = a.isPinned === true;
+      const bPinned = b.isPinned === true;
+
+      if (aPinned !== bPinned) {
+        return aPinned ? -1 : 1;
+      }
+
+      if (aPinned && bPinned) {
+        const aTime = a.pinnedAt?.toMillis?.() || 0;
+        const bTime = b.pinnedAt?.toMillis?.() || 0;
+        return bTime - aTime;
+      }
+
+      const aTime = a.createdAt?.toMillis?.() || 0;
+      const bTime = b.createdAt?.toMillis?.() || 0;
+      return bTime - aTime;
+    });
   }, [activeTab, posts, videos, reels]);
 
   const stats = {
@@ -876,14 +904,7 @@ const [followLoading, setFollowLoading] = useState(false);
                       className="cc-profile-grid-item"
                       type="button"
                       key={`${item.id}-${index}`}
-                      onClick={() =>
-                        setSelectedMedia({
-                          url,
-                          type: isVideo ? "video" : "image",
-                          caption: item.caption || "",
-                          username: viewedProfile.username,
-                        })
-                      }
+                      onClick={() => setSelectedPost(item)}
                     >
                       {isVideo ? (
                         <video
@@ -902,6 +923,16 @@ const [followLoading, setFollowLoading] = useState(false);
                           <Play size={16} fill="currentColor" />
                         </span>
                       )}
+
+                      {item.isPinned === true && (
+                        <span
+                          className="cc-profile-grid-pinned"
+                          aria-label="Pinned to profile"
+                          title="Pinned to profile"
+                        >
+                          <Pin size={15} strokeWidth={2.4} />
+                        </span>
+                      )}
                     </button>
                   );
                 });
@@ -911,46 +942,13 @@ const [followLoading, setFollowLoading] = useState(false);
         </section>
       </div>
 
-      {selectedMedia && (
-        <div
-          className="cc-profile-media-modal"
-          role="dialog"
-          aria-modal="true"
-          onClick={() => setSelectedMedia(null)}
-        >
-          <button
-            className="cc-profile-modal-close"
-            type="button"
-            aria-label="Close"
-            onClick={() => setSelectedMedia(null)}
-          >
-            <X size={27} />
-          </button>
-
-          <div
-            className="cc-profile-media-viewer"
-            onClick={(event) => event.stopPropagation()}
-          >
-            {selectedMedia.type === "video" ? (
-              <video
-                src={selectedMedia.url}
-                controls
-                autoPlay
-                playsInline
-              />
-            ) : (
-              <img
-                src={selectedMedia.url}
-                alt={selectedMedia.caption || "Post"}
-              />
-            )}
-
-            <div className="cc-profile-media-caption">
-              <strong>@{selectedMedia.username}</strong>
-              {selectedMedia.caption && <span>{selectedMedia.caption}</span>}
-            </div>
-          </div>
-        </div>
+      {selectedPost && (
+        <ProfilePostViewer
+          posts={activeItems}
+          initialPostId={selectedPost.id}
+          profile={viewedProfile}
+          onClose={() => setSelectedPost(null)}
+        />
       )}
 
       {editOpen && (

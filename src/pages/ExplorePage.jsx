@@ -10,6 +10,7 @@ import {
 } from "../services/search/searchService";
 
 import { getExploreContent } from "../services/search/exploreService";
+import ProfilePostViewer from "../components/social/ProfilePostViewer";
 
 function getMediaUrl(item) {
   const media = item.media?.[0];
@@ -32,6 +33,7 @@ function ExplorePage() {
 
   const [content, setContent] = useState([]);
   const [loadingContent, setLoadingContent] = useState(true);
+  const [selectedPostId, setSelectedPostId] = useState(null);
 
   useEffect(() => {
     const trimmedQuery = query.trim();
@@ -124,7 +126,7 @@ function ExplorePage() {
       return;
     }
 
-    navigate(`/post/${item.id}`);
+    setSelectedPostId(item.id);
   }
 
   function openUser(user) {
@@ -354,6 +356,18 @@ function ExplorePage() {
             </div>
           )}
         </section>
+      )}
+
+      {selectedPostId && (
+        <ProfilePostViewer
+          posts={(query.trim() ? contentResults : content).filter(
+            (item) =>
+              item.searchType !== "reel" &&
+              item.exploreType !== "reel",
+          )}
+          initialPostId={selectedPostId}
+          onClose={() => setSelectedPostId(null)}
+        />
       )}
     </main>
   );

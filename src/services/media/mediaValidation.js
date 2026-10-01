@@ -1,6 +1,7 @@
 const DEFAULT_MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 const DEFAULT_MAX_VIDEO_SIZE = 25 * 1024 * 1024;
 const DEFAULT_MAX_FILE_SIZE = 10 * 1024 * 1024;
+const DEFAULT_MAX_AUDIO_SIZE = 10 * 1024 * 1024;
 
 const IMAGE_TYPES = new Set([
   "image/jpeg",
@@ -18,6 +19,18 @@ const VIDEO_TYPES = new Set([
   "video/x-m4v",
 ]);
 
+const AUDIO_TYPES = new Set([
+  "audio/webm",
+  "audio/webm;codecs=opus",
+  "audio/mp4",
+  "audio/mpeg",
+  "audio/ogg",
+  "audio/wav",
+  "audio/x-wav",
+  "audio/aac",
+  "audio/mp4a-latm",
+]);
+
 export function getMediaType(fileOrType) {
   const type =
     typeof fileOrType === "string"
@@ -32,6 +45,10 @@ export function getMediaType(fileOrType) {
     return "video";
   }
 
+  if (type.startsWith("audio/")) {
+    return "audio";
+  }
+
   return "file";
 }
 
@@ -43,12 +60,20 @@ export function isVideoFile(file) {
   return getMediaType(file) === "video";
 }
 
+export function isAudioFile(file) {
+  return getMediaType(file) === "audio";
+}
+
 export function isSupportedMediaFile(file) {
   if (!file) return false;
 
+  const type = file.type || "";
+
   return (
-    IMAGE_TYPES.has(file.type) ||
-    VIDEO_TYPES.has(file.type)
+    IMAGE_TYPES.has(type) ||
+    VIDEO_TYPES.has(type) ||
+    AUDIO_TYPES.has(type) ||
+    type.startsWith("audio/")
   );
 }
 
@@ -59,6 +84,10 @@ export function getMaxSizeForMediaType(mediaType, options = {}) {
 
   if (mediaType === "video") {
     return options.maxVideoSize ?? DEFAULT_MAX_VIDEO_SIZE;
+  }
+
+  if (mediaType === "audio") {
+    return options.maxAudioSize ?? DEFAULT_MAX_AUDIO_SIZE;
   }
 
   return options.maxFileSize ?? DEFAULT_MAX_FILE_SIZE;
@@ -94,6 +123,17 @@ export function validateMediaFile(file, options = {}) {
       valid: false,
       code: "VIDEO_NOT_ALLOWED",
       message: "Videos are not allowed here.",
+    };
+  }
+
+  if (
+    !options.allowAudio &&
+    mediaType === "audio"
+  ) {
+    return {
+      valid: false,
+      code: "AUDIO_NOT_ALLOWED",
+      message: "Audio is not allowed here.",
     };
   }
 
@@ -197,5 +237,6 @@ export function validateMediaFiles(
 export const MEDIA_LIMITS = {
   image: DEFAULT_MAX_IMAGE_SIZE,
   video: DEFAULT_MAX_VIDEO_SIZE,
+  audio: DEFAULT_MAX_AUDIO_SIZE,
   file: DEFAULT_MAX_FILE_SIZE,
 };

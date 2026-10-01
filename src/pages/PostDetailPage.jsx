@@ -138,10 +138,12 @@ function PostDetailPage() {
         <PostCard
           id={post.id}
           authorId={post.authorId}
+          isPinned={post.isPinned}
           username={username}
           location={post.location || ""}
           initial={initial}
           image={getMediaUrl(post)}
+          media={post.media || []}
         isArchived={post.isArchived === true}
           likes={post.likesCount || 0}
           caption={post.caption || ""}

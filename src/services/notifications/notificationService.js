@@ -56,6 +56,7 @@ export async function createNotification({
   postId = null,
   commentId = null,
   conversationId = null,
+  storyId = null,
   actorUsername = null,
   actorPhotoURL = null,
 }) {
@@ -118,6 +119,7 @@ export async function createNotification({
     postId,
     commentId,
     conversationId,
+    storyId,
     actorUsername: resolvedActorUsername,
     actorPhotoURL: resolvedActorPhotoURL,
     isRead: false,

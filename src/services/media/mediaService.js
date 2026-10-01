@@ -39,6 +39,11 @@ function normalizeMediaResult(
       result?.publicId ||
       result?.path ||
       null,
+    path:
+      result?.path ||
+      result?.providerId ||
+      result?.publicId ||
+      null,
     resourceType:
       result?.resourceType ||
       validation.mediaType,
@@ -160,6 +165,28 @@ export async function uploadMediaFiles(
       uploadMedia(file, options),
     ),
   );
+}
+
+export async function resolveMediaUrl(media) {
+  if (!media) {
+    throw new Error("MEDIA_REQUIRED");
+  }
+
+  if (typeof media === "string") {
+    return media;
+  }
+
+  if (media.url) {
+    return media.url;
+  }
+
+  if (!mediaProvider?.resolveUrl) {
+    throw new Error(
+      "MEDIA_URL_RESOLVER_NOT_SUPPORTED",
+    );
+  }
+
+  return mediaProvider.resolveUrl(media);
 }
 
 export async function deleteMedia(media) {

@@ -6,8 +6,8 @@ import {
   Grid3X3,
   Link as LinkIcon,
   Menu,
-  MessageCircle,
   MoreHorizontal,
+  Pin,
   Play,
   Plus,
   Repeat2,
@@ -20,9 +20,16 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 
 import { useAuth } from "../features/auth/AuthProvider";
-import { getUserByUsername, updateUserProfile } from "../services/users/userService";
+import {
+  getUserById,
+  getUserByUsername,
+  updateUserProfile,
+} from "../services/users/userService";
 import {
   followUser,
+  getFollowCounts,
+  getFollowers,
+  getFollowing,
   isFollowing,
   unfollowUser,
 } from "../services/follows/followService";
@@ -80,7 +87,11 @@ function ProfilePage() {
   const [profileError, setProfileError] = useState("");
 
   const [following, setFollowing] = useState(false);
-  const [followLoading, setFollowLoading] = useState(false);
+    const [followCounts, setFollowCounts] = useState({
+    followers: 0,
+    following: 0,
+  });
+const [followLoading, setFollowLoading] = useState(false);
   const [followError, setFollowError] = useState("");
 
   const [activeTab, setActiveTab] = useState("posts");
@@ -147,8 +158,44 @@ function ProfilePage() {
   }, [username, profile, loading]);
 
   useEffect(() => {
-    if (!viewedProfile) return;
+    let cancelled = false;
 
+    async function loadFollowCounts() {
+      if (!viewedProfile?.id) {
+        setFollowCounts({
+          followers: 0,
+          following: 0,
+        });
+        return;
+      }
+
+      try {
+        const counts = await getFollowCounts(viewedProfile.id);
+
+        if (!cancelled) {
+          setFollowCounts(counts);
+        }
+      } catch (error) {
+        console.error("Failed to load follow counts:", error);
+
+        if (!cancelled) {
+          setFollowCounts({
+            followers: 0,
+            following: 0,
+          });
+        }
+      }
+    }
+
+    loadFollowCounts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [viewedProfile?.id]);
+
+  useEffect(() => {
+    if (!viewedProfile) return;
     setEditForm({
       displayName: viewedProfile.displayName || "",
       bio: viewedProfile.bio || "",
@@ -258,6 +305,9 @@ function ProfilePage() {
       } else {
         await unfollowUser(user.uid, viewedProfile.id);
       }
+
+      const counts = await getFollowCounts(viewedProfile.id);
+      setFollowCounts(counts);
     } catch (error) {
       console.error("Failed to update follow:", error);
       setFollowing(previousFollowing);
@@ -375,10 +425,36 @@ function ProfilePage() {
   );
 
   const activeItems = useMemo(() => {
-    if (activeTab === "videos") return videos;
-    if (activeTab === "reels") return reels;
-    if (activeTab === "tagged") return [];
-    return posts;
+    let items;
+
+    if (activeTab === "videos") {
+      items = videos;
+    } else if (activeTab === "reels") {
+      items = reels;
+    } else if (activeTab === "tagged") {
+      return [];
+    } else {
+      items = posts;
+    }
+
+    return [...items].sort((a, b) => {
+      const aPinned = a.isPinned === true;
+      const bPinned = b.isPinned === true;
+
+      if (aPinned !== bPinned) {
+        return aPinned ? -1 : 1;
+      }
+
+      if (aPinned && bPinned) {
+        const aTime = a.pinnedAt?.toMillis?.() || 0;
+        const bTime = b.pinnedAt?.toMillis?.() || 0;
+        return bTime - aTime;
+      }
+
+      const aTime = a.createdAt?.toMillis?.() || 0;
+      const bTime = b.createdAt?.toMillis?.() || 0;
+      return bTime - aTime;
+    });
   }, [activeTab, posts, videos, reels]);
 
   const stats = {
@@ -386,8 +462,8 @@ function ProfilePage() {
       viewedProfile?.postsCount ||
       posts.length + videos.length + reels.length ||
       0,
-    followers: viewedProfile?.followersCount || 0,
-    following: viewedProfile?.followingCount || 0,
+    followers: followCounts.followers,
+    following: followCounts.following,
   };
 
   if (loading || profileLoading) {
@@ -575,15 +651,26 @@ function ProfilePage() {
             </div>
 
             <div className="cc-profile-stats">
-              <button type="button" onClick={() => setActiveTab("posts")}>
+              <button
+                type="button"
+                onClick={() => setActiveTab("posts")}
+              >
                 <strong>{formatCount(stats.posts)}</strong>
                 <span>posts</span>
               </button>
-              <button type="button">
+
+              <button
+                type="button"
+                onClick={() => openFollowList("followers")}
+              >
                 <strong>{formatCount(stats.followers)}</strong>
                 <span>followers</span>
               </button>
-              <button type="button">
+
+              <button
+                type="button"
+                onClick={() => openFollowList("following")}
+              >
                 <strong>{formatCount(stats.following)}</strong>
                 <span>following</span>
               </button>
@@ -842,6 +929,16 @@ function ProfilePage() {
                           <Play size={16} fill="currentColor" />
                         </span>
                       )}
+
+                      {item.isPinned === true && (
+                        <span
+                          className="cc-profile-grid-pinned"
+                          aria-label="Pinned to profile"
+                          title="Pinned to profile"
+                        >
+                          <Pin size={15} strokeWidth={2.4} />
+                        </span>
+                      )}
                     </button>
                   );
                 });
@@ -993,6 +1090,99 @@ function ProfilePage() {
           </div>
         </div>
       )}
+      {followListOpen && (
+        <div
+          className="cc-follow-list-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label={
+            followListType === "followers" ? "Followers" : "Following"
+          }
+          onClick={closeFollowList}
+        >
+          <div
+            className="cc-follow-list-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="cc-follow-list-header">
+              <h2>
+                {followListType === "followers" ? "Followers" : "Following"}
+              </h2>
+
+              <button
+                type="button"
+                aria-label="Close"
+                onClick={closeFollowList}
+              >
+                <X size={22} />
+              </button>
+            </header>
+
+            <div className="cc-follow-list-body">
+              {followListLoading ? (
+                <div className="cc-follow-list-state">
+                  <div className="cc-follow-list-spinner" />
+                  <p>Loading...</p>
+                </div>
+              ) : followListError ? (
+                <div className="cc-follow-list-state">
+                  <p>{followListError}</p>
+                  <button
+                    type="button"
+                    onClick={() => openFollowList(followListType)}
+                  >
+                    Try again
+                  </button>
+                </div>
+              ) : followList.length === 0 ? (
+                <div className="cc-follow-list-state">
+                  <div className="cc-follow-list-empty-icon">
+                    <UserPlus size={28} />
+                  </div>
+
+                  <h3>
+                    {followListType === "followers"
+                      ? "No followers yet"
+                      : "Not following anyone yet"}
+                  </h3>
+
+                  <p>
+                    {followListType === "followers"
+                      ? "When people follow this account, they'll appear here."
+                      : "Accounts this profile follows will appear here."}
+                  </p>
+                </div>
+              ) : (
+                <div className="cc-follow-list-items">
+                  {followList.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className="cc-follow-list-item"
+                      onClick={() => {
+                        closeFollowList();
+                        if (item.username) {
+                          navigate(`/profile/${item.username}`);
+                        }
+                      }}
+                    >
+                      <ProfileAvatar profile={item} size="small" />
+
+                      <div className="cc-follow-list-user">
+                        <strong>{item.username || "User"}</strong>
+                        <span>
+                          {item.displayName || item.username || ""}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </main>
   );
 }

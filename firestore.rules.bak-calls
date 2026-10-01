@@ -3,12 +3,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isBlocked(userId, otherUserId) {
-      return exists(
-        /databases/$(database)/documents/users/$(userId)/blocked/$(otherUserId)
-      );
-    }
-
     // =========================
     // STORY ACCESS HELPERS
     // =========================
@@ -43,6 +37,7 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly([
           "username",
           "displayName",
+          "email",
           "photoURL",
           "bio",
           "website",
@@ -119,59 +114,6 @@ service cloud.firestore {
         && request.auth.uid == userId;
 
       allow update: if false;
-    }
-
-    // =========================
-    // BLOCKED USERS
-    // =========================
-
-    match /users/{userId}/blocked/{blockedUserId} {
-      allow read: if request.auth != null
-        && request.auth.uid == userId;
-
-      allow create: if request.auth != null
-        && request.auth.uid == userId
-        && blockedUserId != userId
-        && request.resource.data.keys().hasOnly([
-          "userId",
-          "blockedUserId",
-          "createdAt"
-        ])
-        && request.resource.data.userId == userId
-        && request.resource.data.blockedUserId == blockedUserId;
-
-      allow delete: if request.auth != null
-        && request.auth.uid == userId;
-
-      allow update: if false;
-    }
-
-    // =========================
-    // REPORTS
-    // =========================
-
-    match /reports/{reportId} {
-      allow create: if request.auth != null
-        && request.resource.data.keys().hasOnly([
-          "reporterId",
-          "reportedUserId",
-          "conversationId",
-          "messageId",
-          "reason",
-          "status",
-          "createdAt"
-        ])
-        && request.resource.data.reporterId == request.auth.uid
-        && request.resource.data.reportedUserId is string
-        && request.resource.data.reportedUserId != request.auth.uid
-        && request.resource.data.conversationId is string
-        && request.resource.data.messageId is string
-        && request.resource.data.reason is string
-        && request.resource.data.reason.size() > 0
-        && request.resource.data.status == "open"
-        && request.resource.data.createdAt == request.time;
-
-      allow read, update, delete: if false;
     }
 
     // =========================
@@ -751,24 +693,6 @@ service cloud.firestore {
         /databases/$(database)/documents/conversations/$(conversationId)
       ).data.participantIds
       && request.resource.data.senderId == request.auth.uid
-      && !isBlocked(
-        request.auth.uid,
-        request.resource.data.senderId
-      )
-      && !(
-        isBlocked(
-          request.auth.uid,
-          get(
-            /databases/$(database)/documents/conversations/$(conversationId)
-          ).data.participantIds[0] == request.auth.uid
-            ? get(
-                /databases/$(database)/documents/conversations/$(conversationId)
-              ).data.participantIds[1]
-            : get(
-                /databases/$(database)/documents/conversations/$(conversationId)
-              ).data.participantIds[0]
-        )
-      )
       && request.resource.data.keys().hasOnly([
         "senderId",
         "text",
@@ -913,61 +837,7 @@ service cloud.firestore {
             )
           );
 
-        // A sender can hide their own message only for themselves.
-        // The deletedFor set may only gain the authenticated sender's UID.
-        allow update: if request.auth != null
-          && resource.data.senderId == request.auth.uid
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            "deletedFor",
-            "updatedAt"
-          ])
-          && request.resource.data.deletedFor is list
-          && (
-            resource.data.keys().hasAny(["deletedFor"])
-              ? request.resource.data.deletedFor.toSet()
-                == resource.data.deletedFor.toSet().union(
-                  [request.auth.uid].toSet()
-                )
-              : request.resource.data.deletedFor.toSet()
-                == [request.auth.uid].toSet()
-          );
-
-        // A sender can unsend their own message for everyone.
-        // This preserves the message document while removing its content.
-        allow update: if request.auth != null
-          && resource.data.senderId == request.auth.uid
-          && (
-            !resource.data.keys().hasAny(["isDeleted"])
-            || resource.data.isDeleted == false
-          )
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            "isDeleted",
-            "text",
-            "messageType",
-            "updatedAt",
-            "attachmentUrl",
-            "attachmentName",
-            "attachmentType",
-            "attachmentSize",
-            "sharedContent",
-            "storyId",
-            "reactions"
-          ])
-          && request.resource.data.isDeleted == true
-          && request.resource.data.text == ""
-          && request.resource.data.messageType == "text"
-          && !request.resource.data.keys().hasAny([
-            "attachmentUrl",
-            "attachmentName",
-            "attachmentType",
-            "attachmentSize",
-            "sharedContent",
-            "storyId",
-            "reactions"
-          ]);
-
-        // A sender can delete their own message document only through
-        // legacy/direct deletion paths that are explicitly permitted.
+        // A sender can delete their own message.
         allow delete: if request.auth != null
           && resource.data.senderId == request.auth.uid;
       }
@@ -1000,124 +870,6 @@ service cloud.firestore {
 
         allow delete: if request.auth != null
           && request.auth.uid == userId;
-      }
-    }
-
-    // =========================
-    // CALLS / WEBRTC SIGNALING
-    // =========================
-
-    match /calls/{callId} {
-      // Only the two call participants can read a call.
-      allow get, list: if request.auth != null
-        && (
-          request.auth.uid == resource.data.callerId
-          || request.auth.uid == resource.data.calleeId
-        );
-
-      // The caller creates the ringing call and must belong to
-      // the referenced two-person conversation.
-      allow create: if request.auth != null
-        && request.resource.data.keys().hasOnly([
-          "conversationId",
-          "callerId",
-          "calleeId",
-          "type",
-          "status",
-          "offer",
-          "answer",
-          "createdAt",
-          "updatedAt"
-        ])
-        && request.resource.data.conversationId is string
-        && request.resource.data.conversationId.size() > 0
-        && request.resource.data.callerId == request.auth.uid
-        && request.resource.data.calleeId is string
-        && request.resource.data.calleeId != request.auth.uid
-        && request.resource.data.type in ["audio", "video"]
-        && request.resource.data.status == "ringing"
-        && request.resource.data.offer is map
-        && request.resource.data.offer.type is string
-        && request.resource.data.offer.sdp is string
-        && request.resource.data.createdAt == request.time
-        && request.resource.data.updatedAt == request.time
-        && request.auth.uid in get(
-          /databases/$(database)/documents/conversations/$(request.resource.data.conversationId)
-        ).data.participantIds
-        && request.resource.data.calleeId in get(
-          /databases/$(database)/documents/conversations/$(request.resource.data.conversationId)
-        ).data.participantIds;
-
-      // Participants can update signaling state, answer, and timestamps,
-      // but cannot change the identities, conversation, or call type.
-      allow update: if request.auth != null
-        && (
-          request.auth.uid == resource.data.callerId
-          || request.auth.uid == resource.data.calleeId
-        )
-        && request.resource.data.conversationId == resource.data.conversationId
-        && request.resource.data.callerId == resource.data.callerId
-        && request.resource.data.calleeId == resource.data.calleeId
-        && request.resource.data.type == resource.data.type
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          "status",
-          "answer",
-          "updatedAt",
-          "endedAt"
-        ])
-        && request.resource.data.status in [
-          "ringing",
-          "active",
-          "declined",
-          "ended",
-          "missed"
-        ]
-        && (
-          !request.resource.data.keys().hasAny(["answer"])
-          || request.resource.data.answer == null
-          || (
-            request.resource.data.answer is map
-            && request.resource.data.answer.type is string
-            && request.resource.data.answer.sdp is string
-          )
-        )
-        && (
-          !request.resource.data.keys().hasAny(["endedAt"])
-          || request.resource.data.endedAt is timestamp
-        );
-
-      // Keep completed call records available for call history.
-      // Participants may delete a call if cleanup is ever needed.
-      allow delete: if request.auth != null
-        && (
-          request.auth.uid == resource.data.callerId
-          || request.auth.uid == resource.data.calleeId
-        );
-
-      // Caller ICE candidates.
-      match /offerCandidates/{candidateId} {
-        allow read, create, delete: if request.auth != null
-          && (
-            request.auth.uid == get(
-              /databases/$(database)/documents/calls/$(callId)
-            ).data.callerId
-            || request.auth.uid == get(
-              /databases/$(database)/documents/calls/$(callId)
-            ).data.calleeId
-          );
-      }
-
-      // Callee ICE candidates.
-      match /answerCandidates/{candidateId} {
-        allow read, create, delete: if request.auth != null
-          && (
-            request.auth.uid == get(
-              /databases/$(database)/documents/calls/$(callId)
-            ).data.callerId
-            || request.auth.uid == get(
-              /databases/$(database)/documents/calls/$(callId)
-            ).data.calleeId
-          );
       }
     }
 

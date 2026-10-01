@@ -57,7 +57,6 @@ export async function registerUser({
       transaction.set(userRef, {
         username: normalizedUsername,
         displayName: trimmedDisplayName,
-        email: normalizedEmail,
         photoURL: "",
         bio: "",
         website: "",

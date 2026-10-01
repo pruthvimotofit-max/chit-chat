@@ -13,6 +13,7 @@
     "@hookform/resolvers": "^5.9.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
+    "emoji-picker-react": "^4.22.3",
     "firebase": "^12.18.0",
     "lucide-react": "^1.43.0",
     "react": "^19.2.8",

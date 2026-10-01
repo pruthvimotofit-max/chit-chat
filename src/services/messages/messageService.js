@@ -1,5 +1,7 @@
 import {
+  arrayUnion,
   collection,
+  deleteField,
   doc,
   getDoc,
   getDocs,
@@ -17,6 +19,7 @@ import {
 import { db } from "../../config/firebase";
 import { createNotification } from "../notifications/notificationService";
 import { getUserById } from "../users/userService";
+import { deleteMessageAttachment } from "./messageAttachmentService";
 
 const CONVERSATIONS_COLLECTION = "conversations";
 
@@ -142,6 +145,7 @@ export function subscribeToConversations(
 
 export function subscribeToMessages(
   conversationId,
+  userId,
   callback,
 ) {
   const messagesQuery = query(
@@ -154,12 +158,21 @@ export function subscribeToMessages(
     messagesQuery,
     (snapshot) => {
       callback(
-        snapshot.docs.map(
-          (messageDoc) => ({
-            id: messageDoc.id,
-            ...messageDoc.data(),
-          }),
-        ),
+        snapshot.docs
+          .map(
+            (messageDoc) => ({
+              id: messageDoc.id,
+              ...messageDoc.data(),
+            }),
+          )
+          .filter(
+            (message) =>
+              !(
+                Array.isArray(message.deletedFor)
+                && userId
+                && message.deletedFor.includes(userId)
+              ),
+          ),
       );
     },
     (error) => {
@@ -176,6 +189,9 @@ export async function sendMessage({
   senderId,
   text,
   attachment = null,
+  notificationMessage = null,
+  storyId = null,
+  sharedContent = null,
 }) {
   if (!conversationId) {
     throw new Error("CONVERSATION_ID_REQUIRED");
@@ -187,7 +203,7 @@ export async function sendMessage({
 
   const trimmedText = text?.trim() || "";
 
-  if (!trimmedText && !attachment) {
+  if (!trimmedText && !attachment && !sharedContent) {
     throw new Error("MESSAGE_CONTENT_REQUIRED");
   }
 
@@ -221,6 +237,8 @@ export async function sendMessage({
       messageType = "image";
     } else if (attachment.type.startsWith("video/")) {
       messageType = "video";
+    } else if (attachment.type.startsWith("audio/")) {
+      messageType = "audio";
     } else {
       messageType = "file";
     }
@@ -237,6 +255,36 @@ export async function sendMessage({
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
     isDeleted: false,
+    ...(storyId ? { storyId } : {}),
+    ...(sharedContent
+      ? {
+          sharedContent: {
+            type: sharedContent.type || "post",
+            id: sharedContent.id || "",
+            ...(sharedContent.url
+              ? { url: sharedContent.url }
+              : {}),
+            ...(sharedContent.mediaUrl
+              ? { mediaUrl: sharedContent.mediaUrl }
+              : {}),
+            ...(sharedContent.mediaType
+              ? { mediaType: sharedContent.mediaType }
+              : {}),
+            ...(sharedContent.authorId
+              ? { authorId: sharedContent.authorId }
+              : {}),
+            ...(sharedContent.caption
+              ? { caption: sharedContent.caption }
+              : {}),
+            ...(typeof sharedContent.latitude === "number"
+              ? { latitude: sharedContent.latitude }
+              : {}),
+            ...(typeof sharedContent.longitude === "number"
+              ? { longitude: sharedContent.longitude }
+              : {}),
+          },
+        }
+      : {}),
     ...(attachment
       ? {
           attachmentUrl: attachment.url,
@@ -284,11 +332,17 @@ export async function sendMessage({
 
     const conversationPreview =
       trimmedText ||
-      (messageType === "image"
-        ? "Photo"
-        : messageType === "video"
-          ? "Video"
-          : attachment?.name || "File");
+      (sharedContent
+        ? sharedContent.type === "reel"
+          ? "Shared a reel"
+          : "Shared a post"
+        : messageType === "image"
+          ? "Photo"
+          : messageType === "video"
+            ? "Video"
+            : messageType === "audio"
+              ? "Voice message"
+              : attachment?.name || "File");
 
     transaction.set(
       messageRef,
@@ -332,8 +386,11 @@ export async function sendMessage({
         recipientId,
         actorId: senderId,
         type: "message",
-        message: `${actorName} sent you a message.`,
+        message:
+          notificationMessage ||
+          `${actorName} sent you a message.`,
         conversationId,
+        storyId,
       });
     }
   } catch (notificationError) {
@@ -347,6 +404,56 @@ export async function sendMessage({
     id: messageRef.id,
     ...messageData,
   };
+}
+
+export async function setMessageReaction({
+  conversationId,
+  messageId,
+  userId,
+  reaction,
+}) {
+  if (!conversationId) {
+    throw new Error("CONVERSATION_ID_REQUIRED");
+  }
+
+  if (!messageId) {
+    throw new Error("MESSAGE_ID_REQUIRED");
+  }
+
+  if (!userId) {
+    throw new Error("USER_ID_REQUIRED");
+  }
+
+  const messageRef = doc(
+    getMessagesCollection(conversationId),
+    messageId,
+  );
+
+  const messageSnapshot = await getDoc(messageRef);
+
+  if (!messageSnapshot.exists()) {
+    throw new Error("MESSAGE_NOT_FOUND");
+  }
+
+  const currentReactions =
+    messageSnapshot.data().reactions || {};
+
+  const nextReactions = {
+    ...currentReactions,
+  };
+
+  if (reaction) {
+    nextReactions[userId] = reaction;
+  } else {
+    delete nextReactions[userId];
+  }
+
+  await updateDoc(messageRef, {
+    reactions: nextReactions,
+    updatedAt: serverTimestamp(),
+  });
+
+  return nextReactions;
 }
 
 export async function markConversationRead(
@@ -446,6 +553,147 @@ export function subscribeToReadState(
       );
     },
   );
+}
+
+
+export async function deleteMessage(
+  conversationId,
+  messageId,
+  userId,
+) {
+  if (!conversationId) {
+    throw new Error("CONVERSATION_ID_REQUIRED");
+  }
+
+  if (!messageId) {
+    throw new Error("MESSAGE_ID_REQUIRED");
+  }
+
+  if (!userId) {
+    throw new Error("USER_ID_REQUIRED");
+  }
+
+  const messageRef = doc(
+    db,
+    CONVERSATIONS_COLLECTION,
+    conversationId,
+    "messages",
+    messageId,
+  );
+
+  const messageSnapshot = await getDoc(messageRef);
+
+  if (!messageSnapshot.exists()) {
+    throw new Error("MESSAGE_NOT_FOUND");
+  }
+
+  const message = messageSnapshot.data();
+
+  if (message.senderId !== userId) {
+    throw new Error("MESSAGE_DELETE_NOT_ALLOWED");
+  }
+
+  if (message.isDeleted === true) {
+    return {
+      id: messageId,
+      conversationId,
+    };
+  }
+
+  await updateDoc(messageRef, {
+    deletedFor: arrayUnion(userId),
+    updatedAt: serverTimestamp(),
+  });
+
+  return {
+    id: messageId,
+    conversationId,
+  };
+}
+
+export async function unsendMessage(
+  conversationId,
+  messageId,
+  userId,
+) {
+  if (!conversationId) {
+    throw new Error("CONVERSATION_ID_REQUIRED");
+  }
+
+  if (!messageId) {
+    throw new Error("MESSAGE_ID_REQUIRED");
+  }
+
+  if (!userId) {
+    throw new Error("USER_ID_REQUIRED");
+  }
+
+  const messageRef = doc(
+    db,
+    CONVERSATIONS_COLLECTION,
+    conversationId,
+    "messages",
+    messageId,
+  );
+
+  const messageSnapshot = await getDoc(messageRef);
+
+  if (!messageSnapshot.exists()) {
+    throw new Error("MESSAGE_NOT_FOUND");
+  }
+
+  const message = messageSnapshot.data();
+
+  if (message.senderId !== userId) {
+    throw new Error("MESSAGE_UNSEND_NOT_ALLOWED");
+  }
+
+  if (message.isDeleted === true) {
+    return {
+      id: messageId,
+      conversationId,
+    };
+  }
+
+  const attachment = message.attachmentUrl
+    ? {
+        url: message.attachmentUrl,
+        name: message.attachmentName || "attachment",
+        type: message.attachmentType || "",
+        size: message.attachmentSize || 0,
+        path: message.attachmentPath || null,
+      }
+    : null;
+
+  await updateDoc(messageRef, {
+    isDeleted: true,
+    text: "",
+    messageType: "text",
+    updatedAt: serverTimestamp(),
+    attachmentUrl: deleteField(),
+    attachmentName: deleteField(),
+    attachmentType: deleteField(),
+    attachmentSize: deleteField(),
+    sharedContent: deleteField(),
+    storyId: deleteField(),
+    reactions: deleteField(),
+  });
+
+  if (attachment) {
+    try {
+      await deleteMessageAttachment(attachment);
+    } catch (error) {
+      console.error(
+        "Failed to delete unsent message attachment:",
+        error,
+      );
+    }
+  }
+
+  return {
+    id: messageId,
+    conversationId,
+  };
 }
 
 export async function getConversationById(

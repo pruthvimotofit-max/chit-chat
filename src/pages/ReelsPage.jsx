@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
 import CommentsPanel from "../components/social/CommentsPanel";
 import SharePanel from "../components/social/SharePanel";
 import {
@@ -326,7 +327,7 @@ const [liked, setLiked] = useState(false);
         currentCount + (nextLiked ? 1 : -1),
       );
     });
-
+devel
     setLikeLoading(true);
 
     try {
@@ -870,6 +871,7 @@ function ReelCard({ reel, active, onComments }) {
 
 function ReelsPage() {
   const { user } = useAuth();
+  const { reelId } = useParams();
 
   const [reels, setReels] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -916,6 +918,16 @@ function ReelsPage() {
 
         if (!cancelled) {
           setReels(enriched);
+        
+          if (reelId) {
+            const selectedIndex = enriched.findIndex(
+              (item) => item.id === reelId,
+            );
+
+            if (selectedIndex >= 0) {
+              setActiveIndex(selectedIndex);
+            }
+          }
         }
       } catch (error) {
         console.error("Failed to load Reels:", error);

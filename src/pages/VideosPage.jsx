@@ -164,6 +164,7 @@ function VideosPage() {
               key={post.id}
               id={post.id}
               authorId={post.authorId}
+          isPinned={post.isPinned}
               username={
                 profile?.username ||
                 profile?.displayName ||

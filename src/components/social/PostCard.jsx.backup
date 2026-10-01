@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "../../features/auth/AuthProvider";
-import PostMediaCarousel from "./PostMediaCarousel";
 import CommentsPanel from "./CommentsPanel";
 import { getCommentCount } from "../../services/comments/commentService";
 import SharePanel from "./SharePanel";
@@ -60,7 +59,6 @@ function PostCard({
   location,
   initial,
   image,
-  media = [],
   likes,
   caption,
   comments,
@@ -76,7 +74,6 @@ function PostCard({
   onDeleted,
   onArchived,
   onUpdated,
-  viewerMode = false,
 }) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -471,45 +468,12 @@ function PostCard({
     }
   }
 
-  async function handleShare() {
-    if (!id || !user || shareLoading) {
+  function handleShare() {
+    if (!id || !user) {
       return;
     }
 
-    const shareUrl = `${window.location.origin}/post/${id}`;
-    const shareText = caption
-      ? `${username}: ${caption}`
-      : `Check out this post by ${username} on Chit Chat.`;
-
-    setShareMessage("");
-    setShareLoading(true);
-
-    try {
-      await performShare({
-        postId: id,
-        userId: user.uid,
-        shareUrl,
-        title: `${username} on Chit Chat`,
-        text: shareText,
-      });
-
-      setShareMessage("Post shared successfully.");
-      setSharePanelOpen(false);
-    } catch (error) {
-      if (error?.name === "AbortError") {
-        return;
-      }
-
-      console.error("Failed to share post:", error);
-
-      setShareMessage(
-        error?.message === "SHARE_UNAVAILABLE"
-          ? "Sharing isn't available on this device."
-          : "Couldn't share this post. Please try again.",
-      );
-    } finally {
-      setShareLoading(false);
-    }
+    setSharePanelOpen(true);
   }
 
   function handleCommentsToggle() {
@@ -719,10 +683,7 @@ function PostCard({
   }
 
   return (
-    <article
-      className={`post-card${viewerMode ? " post-card-viewer-mode" : ""}`}
-      ref={postRef}
-    >
+    <article className="post-card" ref={postRef}>
       {repostedByUsername && (
         <div className="post-repost-label">
           <Repeat2 size={15} />
@@ -1049,12 +1010,29 @@ function PostCard({
         </div>
       )}
 
-      <PostMediaCarousel
-        media={media}
-        image={image}
-        caption={displayCaption}
-        viewerMode={viewerMode}
-      />
+      <div className="post-media">
+        {image ? (
+          image.match(/\.(mp4|webm|mov|m4v)(\?.*)?$/i) ? (
+            <video
+              src={image}
+              controls
+              playsInline
+              preload="metadata"
+              aria-label={displayCaption || "Post video"}
+            />
+          ) : (
+            <img
+              src={image}
+              alt={displayCaption || "Post"}
+              loading="lazy"
+            />
+          )
+        ) : (
+          <div className="post-media-empty">
+            <span>No media available</span>
+          </div>
+        )}
+      </div>
 
       <div className="post-actions">
         <div>
@@ -1096,6 +1074,35 @@ function PostCard({
             disabled={shareLoading}
           >
             <Send size={22} />
+          </button>
+          <button
+            type="button"
+            aria-label={reposted ? "Undo repost" : "Repost"}
+            aria-pressed={reposted}
+            onClick={handleRepost}
+            disabled={
+              repostLoading ||
+              !user ||
+              !authorId ||
+              user.uid === authorId
+            }
+            className={
+              reposted
+                ? "post-repost-button reposted"
+                : "post-repost-button"
+            }
+            title={
+              user?.uid === authorId
+                ? "You can't repost your own post"
+                : reposted
+                  ? "Undo repost"
+                  : "Repost"
+            }
+          >
+            <Repeat2 size={22} />
+            {repostCount > 0 && (
+              <span className="post-action-count">{repostCount}</span>
+            )}
           </button>
         </div>
 

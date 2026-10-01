@@ -31,11 +31,37 @@ function createStoragePath(file, options = {}) {
     .replace(/_+/g, "_")
     .slice(0, 180);
 
+  if (purpose === "story") {
+    if (!options.storyId) {
+      throw new Error("STORY_ID_REQUIRED");
+    }
+
+    return `media/${purpose}/${mediaType}/${ownerId}/${options.storyId}/${uniqueId}_${safeName}`;
+  }
+
   return `media/${purpose}/${mediaType}/${ownerId}/${uniqueId}_${safeName}`;
 }
 
 export const firebaseMediaProvider = {
   name: "firebase",
+
+  async resolveUrl(media) {
+    const path =
+      typeof media === "string"
+        ? media
+        : media?.path ||
+          media?.providerId;
+
+    if (!path) {
+      throw new Error(
+        "MEDIA_PROVIDER_ID_REQUIRED",
+      );
+    }
+
+    return getDownloadURL(
+      ref(storage, path),
+    );
+  },
 
   async upload(file, options = {}) {
     if (!file) {
@@ -66,11 +92,14 @@ export const firebaseMediaProvider = {
       },
     );
 
-    const [url, metadata] =
-      await Promise.all([
-        getDownloadURL(snapshot.ref),
-        getMetadata(snapshot.ref),
-      ]);
+    const isStory =
+      options.purpose === "story";
+
+    const metadata = snapshot.metadata;
+
+    const url = isStory
+      ? ""
+      : await getDownloadURL(snapshot.ref);
 
     return {
       url,

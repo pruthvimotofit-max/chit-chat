@@ -42,7 +42,12 @@ function App() {
               <Route path="/profile/:username" element={<ProfilePage />} />
             <Route path="/create" element={<CreatePostPage />} />
               <Route path="/reels" element={<ReelsPage />} />
+              <Route path="/reels/:reelId" element={<ReelsPage />} />
               <Route path="/messages" element={<MessagesPage />} />
+              <Route
+                path="/messages/:conversationId"
+                element={<MessagesPage />}
+              />
               <Route path="/notifications" element={<NotificationsPage />} />
             </Route>
           </Route>

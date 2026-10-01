@@ -189,7 +189,6 @@ function HomePage() {
                     "C"
                   }
                   image={post.media?.[0]?.url || post.media?.[0] || ""}
-                  media={post.media || []}
                   likes={
                     postCounters.get(post.id)?.likes ??
                     post.likesCount ??

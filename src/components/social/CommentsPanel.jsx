@@ -12,6 +12,7 @@ import {
   getCommentReplies,
 } from "../../services/comments/commentReplyService";
 import { getUserById } from "../../services/users/userService";
+import ChitChatEmojiPicker from "../common/ChitChatEmojiPicker";
 
 export default function CommentsPanel({ postId, user, onClose }) {
   const [comments, setComments] = useState([]);
@@ -359,38 +360,17 @@ export default function CommentsPanel({ postId, user, onClose }) {
           onSubmit={handleSubmit}
         >
           {emojiOpen && (
-            <div className="reels-emoji-picker">
-              <div className="reels-emoji-grid">
-                {[
-                  "😀","😃","😄","😁","😆","😅","😂","🤣",
-                  "😊","😇","🙂","🙃","😉","😌","😍","🥰",
-                  "😘","😗","😙","😚","😋","😛","😝","😜",
-                  "🤪","🤨","🧐","🤓","😎","🤩","🥳","😏",
-                  "😢","😭","😤","😡","🤬","😱","😳","🤯",
-                  "❤️","🧡","💛","💚","💙","💜","🖤","🤍",
-                  "🔥","✨","💯","🙏","👏","👍","👎","😂",
-                  "😍","🥹","🤣","❤️‍🔥","💀","🤝","🫶","🙌",
-                ].map((emoji, index) => (
-                  <button
-                    type="button"
-                    key={`${emoji}-${index}`}
-                    className="reels-emoji"
-                    onClick={() => {
-                      setText((current) => current + emoji);
-                      setEmojiOpen(false);
-
-                      window.setTimeout(() => {
-                        document
-                          .querySelector(".reels-comment-input input")
-                          ?.focus();
-                      }, 0);
-                    }}
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <ChitChatEmojiPicker
+              onEmojiClick={(emojiData) => {
+                setText((current) => current + emojiData.emoji);
+                setEmojiOpen(false);
+                window.setTimeout(() => {
+                  document
+                    .querySelector(".reels-comment-input input")
+                    ?.focus();
+                }, 0);
+              }}
+            />
           )}
 
           {replyingTo && (

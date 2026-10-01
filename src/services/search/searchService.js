@@ -1,5 +1,5 @@
 import { searchUsersByUsername } from "../users/userService";
-import { getEnrichedContent } from "../content/contentService";
+import { getExploreSearchContent } from "./exploreService";
 
 export async function searchUsers(query) {
   const trimmedQuery = query.trim();
@@ -34,8 +34,8 @@ export async function searchContent(query, pageSize = 50) {
     return [];
   }
 
-  const content = await getEnrichedContent(
-    pageSize * 2,
+  const content = await getExploreSearchContent(
+    Math.max(200, pageSize * 2),
   );
 
   return content

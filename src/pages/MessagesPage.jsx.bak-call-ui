@@ -1,24 +1,18 @@
 import {
   ArrowLeft,
-  Ban,
   Bookmark,
   Check,
-  Flag,
   Image,
   MapPin,
   MessageCircle,
   Mic,
   Paperclip,
   PenLine,
-  Phone,
   Search,
   Send,
   SmilePlus,
-  MoreHorizontal,
   Sparkles,
   Sticker,
-  Trash2,
-  Undo2,
   UserPlus,
   Video,
   X,
@@ -32,7 +26,6 @@ import {
 
 import { useAuth } from "../features/auth/AuthProvider";
 import {
-  deleteMessage,
   getOrCreateConversation,
   markConversationRead,
   sendMessage,
@@ -40,12 +33,7 @@ import {
   subscribeToConversations,
   subscribeToMessages,
   subscribeToReadState,
-  unsendMessage,
 } from "../services/messages/messageService";
-import {
-  blockUser,
-  reportUser,
-} from "../services/messages/messageModerationService";
 import { grantStoryShareAccess } from "../services/stories/storyService";
 import ChitChatEmojiPicker from "../components/common/ChitChatEmojiPicker";
 import { getSavedPosts } from "../services/saves/saveService";
@@ -94,8 +82,6 @@ function MessagesPage() {
   const [searchingUsers, setSearchingUsers] = useState(false);
   const [otherUserReadState, setOtherUserReadState] = useState(null);
   const [reactionPickerMessageId, setReactionPickerMessageId] = useState(null);
-  const [swipedMessageId, setSwipedMessageId] = useState(null);
-  const [conversationMenuOpen, setConversationMenuOpen] = useState(false);
   const [composerToolsOpen, setComposerToolsOpen] = useState(false);
   const [composerEmojiOpen, setComposerEmojiOpen] = useState(false);
 const [composerSavedOpen, setComposerSavedOpen] = useState(false);
@@ -117,7 +103,6 @@ const [sharingLocation, setSharingLocation] = useState(false);
   const [isCallCameraOff, setIsCallCameraOff] = useState(false);
 
   const messagesEndRef = useRef(null);
-  const messageSwipeRef = useRef(null);
   const attachmentInputRef = useRef(null);
   const voiceRecorderRef = useRef(null);
   const voiceStreamRef = useRef(null);
@@ -128,8 +113,6 @@ const [sharingLocation, setSharingLocation] = useState(false);
   const callLocalStreamRef = useRef(null);
   const callRemoteStreamRef = useRef(null);
   const callCandidateQueueRef = useRef([]);
-  const localCallVideoRef = useRef(null);
-  const remoteCallVideoRef = useRef(null);
   const callUnsubscribersRef = useRef([]);
 
   useEffect(() => {
@@ -226,10 +209,9 @@ const [sharingLocation, setSharingLocation] = useState(false);
 
     return subscribeToMessages(
       activeConversationId,
-      user.uid,
       setMessages,
     );
-  }, [activeConversationId, user?.uid]);
+  }, [activeConversationId]);
 
   useEffect(() => {
     if (!activeConversationId || !user?.uid) {
@@ -950,285 +932,6 @@ async function openSavedComposer() {
     }
   }
 
-
-  async function handleReportUser() {
-    const reportedUserId =
-      activeConversation?.participantIds?.find(
-        (id) => id !== user?.uid,
-      );
-
-    if (
-      !user?.uid ||
-      !reportedUserId ||
-      reportedUserId === user.uid ||
-      !activeConversationId
-    ) {
-      return;
-    }
-
-    const confirmed = window.confirm(
-      "Report this user to Chit Chat moderation?",
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      await reportUser({
-        reporterId: user.uid,
-        reportedUserId,
-        conversationId: activeConversationId,
-        reason: "inappropriate",
-      });
-
-      setConversationMenuOpen(false);
-      window.alert(
-        "Thanks. Your report has been submitted.",
-      );
-    } catch (error) {
-      console.error(
-        "Failed to report user:",
-        error,
-      );
-      window.alert(
-        "Could not submit the report. Please try again.",
-      );
-    }
-  }
-
-  async function handleBlockActiveUser() {
-    const blockedUserId =
-      activeConversation?.participantIds?.find(
-        (id) => id !== user?.uid,
-      );
-
-    if (
-      !user?.uid ||
-      !blockedUserId ||
-      blockedUserId === user.uid
-    ) {
-      return;
-    }
-
-    const confirmed = window.confirm(
-      "Block this user? They will no longer be able to message you.",
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      await blockUser(
-        user.uid,
-        blockedUserId,
-      );
-
-      setConversationMenuOpen(false);
-      window.alert(
-        "User blocked successfully.",
-      );
-    } catch (error) {
-      console.error(
-        "Failed to block user:",
-        error,
-      );
-      window.alert(
-        "Could not block this user. Please try again.",
-      );
-    }
-  }
-
-  function handleMessageSwipeStart(event, message) {
-    if (
-      event.target?.closest?.(".message-swipe-action") ||
-      message?.senderId !== user?.uid ||
-      message?.isDeleted === true
-    ) {
-      return;
-    }
-
-    const point =
-      event.pointerType !== undefined
-        ? event
-        : event.touches?.[0];
-
-    if (!point) {
-      return;
-    }
-
-    if (event.pointerType !== undefined && event.button !== 0) {
-      return;
-    }
-
-    if (
-      event.currentTarget?.setPointerCapture &&
-      event.pointerId !== undefined
-    ) {
-      try {
-        event.currentTarget.setPointerCapture(event.pointerId);
-      } catch {
-        // Pointer capture is best-effort.
-      }
-    }
-
-    messageSwipeRef.current = {
-      messageId: message.id,
-      startX: point.clientX,
-      startY: point.clientY,
-      currentOffset: swipedMessageId === message.id ? -112 : 0,
-      tracking: true,
-    };
-  }
-
-  function handleMessageSwipeMove(event, message) {
-    const swipe = messageSwipeRef.current;
-
-    if (
-      !swipe?.tracking ||
-      swipe.messageId !== message.id
-    ) {
-      return;
-    }
-
-    const point =
-      event.pointerType !== undefined
-        ? event
-        : event.touches?.[0];
-
-    if (!point) {
-      return;
-    }
-
-    const deltaX = point.clientX - swipe.startX;
-    const deltaY = point.clientY - swipe.startY;
-
-    if (Math.abs(deltaY) > Math.abs(deltaX) + 8) {
-      swipe.tracking = false;
-      return;
-    }
-
-    if (deltaX < 0) {
-      event.preventDefault();
-
-      const offset = Math.max(
-        -112,
-        Math.min(0, deltaX),
-      );
-
-      swipe.currentOffset = offset;
-
-      const content = event.currentTarget.querySelector(
-        ".message-swipe-content",
-      );
-
-      if (content) {
-        content.style.transform = `translateX(${offset}px)`;
-      }
-    }
-  }
-
-  function handleMessageSwipeEnd(message) {
-    const swipe = messageSwipeRef.current;
-
-    if (
-      !swipe ||
-      swipe.messageId !== message.id
-    ) {
-      return;
-    }
-
-    const content = document.querySelector(
-      `[data-message-swipe-id="${message.id}"] .message-swipe-content`,
-    );
-
-    if (swipe.currentOffset <= -56) {
-      setSwipedMessageId(message.id);
-
-      if (content) {
-        content.style.transform = "translateX(-112px)";
-      }
-    } else {
-      setSwipedMessageId(null);
-
-      if (content) {
-        content.style.transform = "translateX(0)";
-      }
-    }
-
-    messageSwipeRef.current = null;
-  }
-
-  function handleCloseMessageSwipe() {
-    setSwipedMessageId(null);
-  }
-
-  async function handleDeleteMessage(message) {
-    if (
-      !user?.uid ||
-      !activeConversationId ||
-      !message?.id ||
-      message.senderId !== user.uid
-    ) {
-      return;
-    }
-
-    const confirmed = window.confirm(
-      "Delete this message? This cannot be undone.",
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      await deleteMessage(
-        activeConversationId,
-        message.id,
-        user.uid,
-      );
-
-      setReactionPickerMessageId(null);
-    } catch (error) {
-      console.error("Failed to delete message:", error);
-    }
-  }
-
-  async function handleUnsendMessage(message) {
-    if (
-      !user?.uid ||
-      !activeConversationId ||
-      !message?.id ||
-      message.senderId !== user.uid
-    ) {
-      return;
-    }
-
-    const confirmed = window.confirm(
-      "Unsend this message for everyone?",
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      await unsendMessage(
-        activeConversationId,
-        message.id,
-        user.uid,
-      );
-
-      setReactionPickerMessageId(null);
-    } catch (error) {
-      console.error(
-        "Failed to unsend message:",
-        error,
-      );
-    }
-  }
-
   async function handleUserSearch(value) {
     setSearch(value);
 
@@ -1628,38 +1331,9 @@ async function openSavedComposer() {
         error,
       );
 
-      let message =
-        "Could not start the call.";
-
-      if (error?.name === "NotAllowedError") {
-        message =
-          callType === "video"
-            ? "Camera or microphone permission was denied. Allow access for localhost and try again."
-            : "Microphone permission was denied. Allow microphone access for localhost and try again.";
-      } else if (error?.name === "NotFoundError") {
-        message =
-          callType === "video"
-            ? "No camera or microphone was found."
-            : "No microphone was found.";
-      } else if (error?.name === "NotReadableError") {
-        message =
-          callType === "video"
-            ? "The camera or microphone is already being used by another app."
-            : "The microphone is already being used by another app.";
-      } else if (error?.name === "SecurityError") {
-        message =
-          "The browser blocked access to the microphone or camera.";
-      } else if (
-        error?.code === "permission-denied" ||
-        error?.code === "PERMISSION_DENIED"
-      ) {
-        message =
-          "Firebase permission was denied while starting the call.";
-      } else if (error?.message) {
-        message = error.message;
-      }
-
-      setCallError(message);
+      setCallError(
+        "Could not start the call. Please check microphone/camera permissions.",
+      );
 
       cleanupActiveCall();
     }
@@ -1857,18 +1531,6 @@ async function openSavedComposer() {
 
     setIsCallCameraOff(nextCameraOff);
   }
-
-  useEffect(() => {
-    if (localCallVideoRef.current) {
-      localCallVideoRef.current.srcObject =
-        localCallStream || null;
-    }
-
-    if (remoteCallVideoRef.current) {
-      remoteCallVideoRef.current.srcObject =
-        remoteCallStream || null;
-    }
-  }, [localCallStream, remoteCallStream]);
 
   useEffect(() => {
     return () => {
@@ -2183,329 +1845,7 @@ async function openSavedComposer() {
                     </>
                   );
                 })()}
-                <div className="messages-call-actions">
-                  <button
-                    type="button"
-                    className="messages-call-action"
-                    onClick={() => void startCall("audio")}
-                    disabled={
-                      callStatus !== "idle" ||
-                      Boolean(incomingCall)
-                    }
-                    aria-label="Start voice call"
-                    title="Voice call"
-                  >
-                    <Phone size={19} />
-                  </button>
-
-                  <button
-                    type="button"
-                    className="messages-call-action"
-                    onClick={() => void startCall("video")}
-                    disabled={
-                      callStatus !== "idle" ||
-                      Boolean(incomingCall)
-                    }
-                    aria-label="Start video call"
-                    title="Video call"
-                  >
-                    <Video size={20} />
-                  </button>
-
-                  <div className="messages-conversation-menu">
-                    <button
-                      type="button"
-                      className="messages-call-action messages-conversation-menu-trigger"
-                      onClick={() => {
-                        setConversationMenuOpen(
-                          (current) => !current,
-                        );
-                      }}
-                      aria-label="Conversation options"
-                      title="Conversation options"
-                      aria-expanded={conversationMenuOpen}
-                      aria-haspopup="menu"
-                    >
-                      <MoreHorizontal size={20} />
-                    </button>
-
-                    {conversationMenuOpen && (
-                      <div
-                        className="messages-conversation-menu-panel"
-                        role="menu"
-                      >
-                        <button
-                          type="button"
-                          className="messages-conversation-menu-item"
-                          onClick={() => {
-                            void handleReportUser();
-                          }}
-                          role="menuitem"
-                        >
-                          <Flag size={17} />
-                          <span>Report user</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          className="messages-conversation-menu-item danger"
-                          onClick={() => {
-                            void handleBlockActiveUser();
-                          }}
-                          role="menuitem"
-                        >
-                          <Ban size={17} />
-                          <span>Block user</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
               </header>
-
-              <div className="messages-call-layer">
-                {incomingCall && (
-                  <div className="messages-incoming-call">
-                    <div className="messages-incoming-call-avatar">
-                      {conversationProfiles[
-                        incomingCall.callerId
-                      ]?.photoURL ? (
-                        <img
-                          src={
-                            conversationProfiles[
-                              incomingCall.callerId
-                            ].photoURL
-                          }
-                          alt=""
-                        />
-                      ) : (
-                        (
-                          conversationProfiles[
-                            incomingCall.callerId
-                          ]?.displayName ||
-                          conversationProfiles[
-                            incomingCall.callerId
-                          ]?.username ||
-                          "?"
-                        )
-                          .slice(0, 1)
-                          .toUpperCase()
-                      )}
-                    </div>
-
-                    <div className="messages-incoming-call-copy">
-                      <span>Incoming {incomingCall.type === "video" ? "video" : "voice"} call</span>
-                      <strong>
-                        {conversationProfiles[
-                          incomingCall.callerId
-                        ]?.displayName ||
-                          conversationProfiles[
-                            incomingCall.callerId
-                          ]?.username ||
-                          "Chit Chat user"}
-                      </strong>
-                    </div>
-
-                    <div className="messages-incoming-call-actions">
-                      <button
-                        type="button"
-                        className="messages-call-control messages-call-control-danger"
-                        onClick={() =>
-                          void declineIncomingCall()
-                        }
-                        aria-label="Decline call"
-                        title="Decline"
-                      >
-                        <X size={19} />
-                      </button>
-
-                      <button
-                        type="button"
-                        className="messages-call-control messages-call-control-accept"
-                        onClick={() =>
-                          void acceptIncomingCall()
-                        }
-                        aria-label="Accept call"
-                        title="Accept"
-                      >
-                        {incomingCall.type === "video" ? (
-                          <Video size={19} />
-                        ) : (
-                          <Phone size={19} />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {activeCall && callStatus !== "idle" && (
-                  <div
-                    className={`messages-active-call ${
-                      activeCall.type === "video"
-                        ? "video"
-                        : "audio"
-                    }`}
-                  >
-                    {activeCall.type === "video" ? (
-                      <div className="messages-call-video-stage">
-                        <video
-                          ref={remoteCallVideoRef}
-                          className="messages-call-remote-video"
-                          autoPlay
-                          playsInline
-                        />
-
-                        {!remoteCallStream && (
-                          <div className="messages-call-video-placeholder">
-                            <div className="messages-call-avatar-large">
-                              {(
-                                conversationProfiles[
-                                  activeCall.callerId === user?.uid
-                                    ? activeCall.calleeId
-                                    : activeCall.callerId
-                                ]?.displayName ||
-                                conversationProfiles[
-                                  activeCall.callerId === user?.uid
-                                    ? activeCall.calleeId
-                                    : activeCall.callerId
-                                ]?.username ||
-                                "?"
-                              )
-                                .slice(0, 1)
-                                .toUpperCase()}
-                            </div>
-                            <strong>
-                              {callStatus === "calling"
-                                ? "Calling…"
-                                : callStatus === "ringing"
-                                  ? "Connecting…"
-                                  : "Connecting…"}
-                            </strong>
-                          </div>
-                        )}
-
-                        <video
-                          ref={localCallVideoRef}
-                          className="messages-call-local-video"
-                          autoPlay
-                          muted
-                          playsInline
-                        />
-                      </div>
-                    ) : (
-                      <div className="messages-call-audio-stage">
-                        <div className="messages-call-avatar-large">
-                          {(
-                            conversationProfiles[
-                              activeCall.callerId === user?.uid
-                                ? activeCall.calleeId
-                                : activeCall.callerId
-                            ]?.displayName ||
-                            conversationProfiles[
-                              activeCall.callerId === user?.uid
-                                ? activeCall.calleeId
-                                : activeCall.callerId
-                            ]?.username ||
-                            "?"
-                          )
-                            .slice(0, 1)
-                            .toUpperCase()}
-                        </div>
-
-                        <strong>
-                          {conversationProfiles[
-                            activeCall.callerId === user?.uid
-                              ? activeCall.calleeId
-                              : activeCall.callerId
-                          ]?.displayName ||
-                            conversationProfiles[
-                              activeCall.callerId === user?.uid
-                                ? activeCall.calleeId
-                                : activeCall.callerId
-                            ]?.username ||
-                            "Chit Chat user"}
-                        </strong>
-
-                        <span>
-                          {callStatus === "calling"
-                            ? "Calling…"
-                            : callStatus === "connecting"
-                              ? "Connecting…"
-                              : callStatus === "connected"
-                                ? "Connected"
-                                : "Call"}
-                        </span>
-                      </div>
-                    )}
-
-                    <div className="messages-active-call-controls">
-                      <button
-                        type="button"
-                        className={`messages-call-control ${
-                          isCallMuted
-                            ? "messages-call-control-active"
-                            : ""
-                        }`}
-                        onClick={toggleCallMute}
-                        aria-label={
-                          isCallMuted
-                            ? "Unmute microphone"
-                            : "Mute microphone"
-                        }
-                        title={
-                          isCallMuted
-                            ? "Unmute"
-                            : "Mute"
-                        }
-                      >
-                        <Mic size={19} />
-                      </button>
-
-                      {activeCall.type === "video" && (
-                        <button
-                          type="button"
-                          className={`messages-call-control ${
-                            isCallCameraOff
-                              ? "messages-call-control-active"
-                              : ""
-                          }`}
-                          onClick={toggleCallCamera}
-                          aria-label={
-                            isCallCameraOff
-                              ? "Turn camera on"
-                              : "Turn camera off"
-                          }
-                          title={
-                            isCallCameraOff
-                              ? "Camera on"
-                              : "Camera off"
-                          }
-                        >
-                          <Video size={19} />
-                        </button>
-                      )}
-
-                      <button
-                        type="button"
-                        className="messages-call-control messages-call-control-danger"
-                        onClick={() =>
-                          void endActiveCall()
-                        }
-                        aria-label="End call"
-                        title="End call"
-                      >
-                        <Phone size={19} />
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {callError && (
-                  <div className="messages-call-error">
-                    {callError}
-                  </div>
-                )}
-              </div>
 
               <div className="messages-list">
                 {messages.length === 0 ? (
@@ -2524,76 +1864,7 @@ async function openSavedComposer() {
                           mine ? "mine" : "theirs"
                         }`}
                       >
-                        <div
-                          className="message-swipe-shell"
-                          data-message-swipe-id={message.id}
-                          onPointerDown={(event) =>
-                            handleMessageSwipeStart(
-                              event,
-                              message,
-                            )
-                          }
-                          onPointerMove={(event) =>
-                            handleMessageSwipeMove(
-                              event,
-                              message,
-                            )
-                          }
-                          onPointerUp={() =>
-                            handleMessageSwipeEnd(message)
-                          }
-                          onPointerCancel={() =>
-                            handleMessageSwipeEnd(message)
-                          }
-                        >
-                          {mine && (
-                            <div
-                              className={`message-swipe-actions ${
-                                swipedMessageId === message.id
-                                  ? "visible"
-                                  : ""
-                              }`}
-                            >
-                              <button
-                                type="button"
-                                className="message-swipe-action message-swipe-action-unsend"
-                                onClick={async () => {
-                                  await handleUnsendMessage(message);
-                                  handleCloseMessageSwipe();
-                                }}
-                                tabIndex={
-                                  swipedMessageId === message.id ? 0 : -1
-                                }
-                                aria-label="Unsend message for everyone"
-                                title="Unsend for everyone"
-                              >
-                                <Undo2 size={17} />
-                                <span>Unsend</span>
-                              </button>
-                            </div>
-                          )}
-
-                          <div
-                            className="message-swipe-content"
-                            style={{
-                              transform:
-                                swipedMessageId === message.id
-                                  ? "translateX(-112px)"
-                                  : "translateX(0)",
-                            }}
-                          >
-                            <div
-                          className={`message-bubble ${
-                            message.isDeleted ? "message-bubble-unsent" : ""
-                          }`}
-                        >
-                          {message.isDeleted ? (
-                            <div className="message-unsent-state">
-                              <Undo2 size={17} />
-                              <span>Message unsent</span>
-                            </div>
-                          ) : (
-                            <>
+                        <div className="message-bubble">
                           {message.sharedContent?.type === "location" && (
                             <div className="message-shared-location">
                               <div className="message-shared-location-icon">
@@ -2741,12 +2012,9 @@ async function openSavedComposer() {
                               {message.text}
                             </div>
                           )}
-                            </>
-                          )}
                         </div>
 
-                        {!message.isDeleted &&
-                          Object.keys(message.reactions || {}).length > 0 && (
+                        {Object.keys(message.reactions || {}).length > 0 && (
                           <div className="message-reactions">
                             {[
                               ...new Set(
@@ -2784,9 +2052,8 @@ async function openSavedComposer() {
                           </div>
                         )}
 
-                        {!message.isDeleted && (
-                          <div className="message-reaction-tools">
-                            {reactionPickerMessageId === message.id && (
+                        <div className="message-reaction-tools">
+                          {reactionPickerMessageId === message.id && (
                             <div
                               className={`message-reaction-picker ${
                                 mine ? "mine" : "theirs"
@@ -2821,16 +2088,13 @@ async function openSavedComposer() {
                           >
                             <SmilePlus size={15} />
                           </button>
-                          </div>
-                        )}
+                        </div>
 
-                            <div className="message-meta">
-                              {formatMessageTime(message.createdAt)}
-                              {mine && isMessageSeen(message)
-                                ? " · Seen"
-                                : ""}
-                            </div>
-                          </div>
+                        <div className="message-meta">
+                          {formatMessageTime(message.createdAt)}
+                          {mine && isMessageSeen(message)
+                            ? " · Seen"
+                            : ""}
                         </div>
                       </div>
                     );

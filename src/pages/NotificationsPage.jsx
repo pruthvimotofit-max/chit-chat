@@ -108,6 +108,18 @@ function NotificationsPage() {
       );
     }
 
+    if (notification.storyId) {
+      navigate(
+        `/?storyId=${encodeURIComponent(notification.storyId)}`,
+      );
+      return;
+    }
+
+    if (notification.storyId) {
+      navigate(`/?storyId=${encodeURIComponent(notification.storyId)}`);
+      return;
+    }
+
     if (notification.postId) {
       if (
         notification.type === "reel" ||

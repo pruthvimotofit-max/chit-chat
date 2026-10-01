@@ -497,7 +497,7 @@ function SettingsPage() {
                 <div className="cc-account-info-copy">
                   <span>Email address</span>
                   <strong>
-                    {profile?.email || "Not available"}
+                    {user?.email || "Not available"}
                   </strong>
                 </div>
               </div>

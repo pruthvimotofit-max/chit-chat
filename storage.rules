@@ -37,6 +37,54 @@ service firebase.storage {
     }
 
     // =========================================
+    // STORY MEDIA
+    // =========================================
+    match /media/story/{mediaType}/{userId}/{storyId}/{fileName} {
+      // Story media follows the visibility of its Firestore Story.
+      // One Story lookup is reused, keeping Storage rule access
+      // within Firebase's two-document lookup limit.
+      function storyDoc() {
+        return firestore.get(
+          /databases/(default)/documents/stories/$(storyId)
+        ).data;
+      }
+
+      function canReadStoryMedia() {
+        return request.auth != null
+          && storyDoc().authorId == userId
+          && (
+            storyDoc().authorId == request.auth.uid
+            || storyDoc().visibility == "public"
+            || (
+              storyDoc().visibility == "followers"
+              && firestore.exists(
+                /databases/(default)/documents/users/$(userId)/followers/$(request.auth.uid)
+              )
+            )
+          );
+      }
+
+      allow read: if canReadStoryMedia();
+
+      // Story media is uploaded only by the authenticated owner.
+      // The Firestore Story document is created immediately after
+      // this upload.
+      allow create: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.size <= 100 * 1024 * 1024
+        && request.resource.contentType.matches(
+          'image/.*|video/.*'
+        );
+
+      // Story media is immutable.
+      allow update: if false;
+
+      // Only the Story owner can delete its media.
+      allow delete: if request.auth != null
+        && request.auth.uid == userId;
+    }
+
+    // =========================================
     // APP MEDIA
     // =========================================
     match /media/{purpose}/{mediaType}/{userId}/{fileName} {
@@ -50,7 +98,7 @@ service firebase.storage {
         && request.auth.uid == userId
         && request.resource.size <= 100 * 1024 * 1024
         && request.resource.contentType.matches(
-          'image/.*|video/.*'
+          'image/.*|video/.*|audio/.*'
         );
 
       // Media is immutable after upload.

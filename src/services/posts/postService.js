@@ -204,6 +204,75 @@ export async function createPost({
   return getPostById(postRef.id);
 }
 
+export async function pinPost(postId, userId) {
+  if (!postId || !userId) {
+    throw new Error("Missing post or user.");
+  }
+
+  const post = await getPostById(postId);
+
+  if (!post) {
+    throw new Error("POST_NOT_FOUND");
+  }
+
+  if (post.authorId !== userId) {
+    throw new Error("NOT_POST_OWNER");
+  }
+
+  if (post.isPinned === true) {
+    return post;
+  }
+
+  const pinnedSnapshot = await getDocs(
+    query(
+      collection(db, "posts"),
+      where("authorId", "==", userId),
+      where("isPinned", "==", true),
+      limit(4),
+    ),
+  );
+
+  if (pinnedSnapshot.size >= 3) {
+    throw new Error("PIN_LIMIT_REACHED");
+  }
+
+  await updateDoc(doc(db, "posts", postId), {
+    isPinned: true,
+    pinnedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+
+  return getPostById(postId);
+}
+
+export async function unpinPost(postId, userId) {
+  if (!postId || !userId) {
+    throw new Error("Missing post or user.");
+  }
+
+  const post = await getPostById(postId);
+
+  if (!post) {
+    throw new Error("POST_NOT_FOUND");
+  }
+
+  if (post.authorId !== userId) {
+    throw new Error("NOT_POST_OWNER");
+  }
+
+  if (post.isPinned !== true) {
+    return post;
+  }
+
+  await updateDoc(doc(db, "posts", postId), {
+    isPinned: false,
+    pinnedAt: null,
+    updatedAt: serverTimestamp(),
+  });
+
+  return getPostById(postId);
+}
+
 export async function updatePost({
   postId,
   userId,

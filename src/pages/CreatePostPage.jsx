@@ -15,7 +15,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { useAuth } from "../features/auth/AuthProvider";
 import { createPost } from "../services/posts/postService";
-import { createStory } from "../services/stories/storyService";
+import { createStory, createStoryId } from "../services/stories/storyService";
 import {
   getMediaProviderStatus,
   uploadMedia,
@@ -215,127 +215,18 @@ function CreatePostPage() {
           return;
         }
 
-        let uploadFile = storyFile;
-
-        if (isImage) {
-          uploadFile = await new Promise(
-            (resolve, reject) => {
-              const reader = new FileReader();
-
-              reader.onload = () => {
-                const image = new Image();
-
-                image.onload = () => {
-                  const maxDimension = 1600;
-
-                  const scale = Math.min(
-                    1,
-                    maxDimension /
-                      Math.max(
-                        image.width,
-                        image.height,
-                      ),
-                  );
-
-                  const canvas =
-                    document.createElement(
-                      "canvas",
-                    );
-
-                  canvas.width = Math.max(
-                    1,
-                    Math.round(
-                      image.width * scale,
-                    ),
-                  );
-
-                  canvas.height = Math.max(
-                    1,
-                    Math.round(
-                      image.height * scale,
-                    ),
-                  );
-
-                  const context =
-                    canvas.getContext("2d");
-
-                  if (!context) {
-                    reject(
-                      new Error(
-                        "IMAGE_CANVAS_FAILED",
-                      ),
-                    );
-                    return;
-                  }
-
-                  context.drawImage(
-                    image,
-                    0,
-                    0,
-                    canvas.width,
-                    canvas.height,
-                  );
-
-                  canvas.toBlob(
-                    (blob) => {
-                      if (!blob) {
-                        reject(
-                          new Error(
-                            "IMAGE_COMPRESSION_FAILED",
-                          ),
-                        );
-                        return;
-                      }
-
-                      const compressedFile =
-                        new File(
-                          [blob],
-                          storyFile.name.replace(
-                            /\.[^/.]+$/,
-                            ".jpg",
-                          ),
-                          {
-                            type: "image/jpeg",
-                            lastModified:
-                              Date.now(),
-                          },
-                        );
-
-                      resolve(
-                        compressedFile,
-                      );
-                    },
-                    "image/jpeg",
-                    0.78,
-                  );
-                };
-
-                image.onerror = () => {
-                  reject(
-                    new Error(
-                      "IMAGE_LOAD_FAILED",
-                    ),
-                  );
-                };
-
-                image.src = reader.result;
-              };
-
-              reader.onerror = () => {
-                reject(
-                  new Error("IMAGE_READ_FAILED"),
-                );
-              };
-
-              reader.readAsDataURL(storyFile);
-            },
-          );
-        }
+        const storyId = createStoryId();
+        const uploadFile = storyFile;
 
         const uploadedMedia =
           await uploadMedia(uploadFile, {
             purpose: "story",
             userId: user.uid,
+            ownerId: user.uid,
+            storyId,
+            mediaType: isVideo
+              ? "video"
+              : "image",
             allowImages: true,
             allowVideos: true,
             allowFiles: false,
@@ -345,13 +236,14 @@ function CreatePostPage() {
               25 * 1024 * 1024,
           });
 
-        if (!uploadedMedia?.url) {
+        if (!uploadedMedia?.path) {
           throw new Error(
             "MEDIA_UPLOAD_FAILED",
           );
         }
 
         const story = await createStory({
+          storyId,
           authorId: user.uid,
           media: [uploadedMedia],
           mediaType: isVideo

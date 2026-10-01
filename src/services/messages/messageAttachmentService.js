@@ -6,10 +6,12 @@ import {
 } from "../media/mediaService";
 
 const MAX_ATTACHMENT_SIZE = 25 * 1024 * 1024;
+const MAX_AUDIO_SIZE = 10 * 1024 * 1024;
 
 const ALLOWED_TYPES = [
   /^image\//,
   /^video\//,
+  /^audio\//,
   /^text\//,
   /^application\/pdf$/,
   /^application\/msword$/,
@@ -56,9 +58,11 @@ function validateAttachment(file) {
   const validation = validateMediaFile(file, {
     allowImages: mediaType === "image",
     allowVideos: mediaType === "video",
+    allowAudio: mediaType === "audio",
     allowFiles: mediaType === "file",
     maxImageSize: MAX_ATTACHMENT_SIZE,
     maxVideoSize: MAX_ATTACHMENT_SIZE,
+    maxAudioSize: MAX_AUDIO_SIZE,
     maxFileSize: MAX_ATTACHMENT_SIZE,
   });
 
@@ -96,9 +100,11 @@ export async function uploadMessageAttachment({
     userId,
     allowImages: true,
     allowVideos: true,
+    allowAudio: true,
     allowFiles: true,
     maxImageSize: MAX_ATTACHMENT_SIZE,
     maxVideoSize: MAX_ATTACHMENT_SIZE,
+    maxAudioSize: MAX_AUDIO_SIZE,
     maxFileSize: MAX_ATTACHMENT_SIZE,
   });
 
