@@ -131,6 +131,7 @@ export async function createPost({
   hideLikeCount = false,
   hideShareCount = false,
   collaboratorIds = [],
+  audio = null,
 }) {
   if (!authorId) {
     throw new Error("AUTHOR_ID_REQUIRED");
@@ -171,6 +172,13 @@ export async function createPost({
       : [],
     mediaType,
     postType,
+    audio: audio && typeof audio === "object" ? {
+      title: String(audio.title || "Selected audio").slice(0, 255),
+      url: String(audio.url || ""),
+      mimeType: String(audio.mimeType || ""),
+      path: audio.path ?? null,
+      originalName: String(audio.originalName || "").slice(0, 255),
+    } : null,
     visibility,
     location: location.trim(),
 
