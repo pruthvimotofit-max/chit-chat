@@ -8,6 +8,7 @@ import AppLayout from "./layouts/AppLayout";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import CreatePostPage from "./pages/CreatePostPage";
+import CreateReelPage from "./pages/CreateReelPage";
 import ReelsPage from "./pages/ReelsPage";
 import MessagesPage from "./pages/MessagesPage";
 import NotificationsPage from "./pages/NotificationsPage";
@@ -40,6 +41,7 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/profile/:username" element={<ProfilePage />} />
+            <Route path="/create/reel" element={<CreateReelPage />} />
             <Route path="/create" element={<CreatePostPage />} />
               <Route path="/reels" element={<ReelsPage />} />
               <Route path="/reels/:reelId" element={<ReelsPage />} />
