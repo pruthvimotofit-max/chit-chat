@@ -155,6 +155,21 @@ export async function hideConversationForUser(conversationId, userId) {
   await updateDoc(conversationRef, { hiddenFor: arrayUnion(userId) });
 }
 
+// Restores a conversation to the current user's Messages list.
+export async function restoreConversationForUser(conversationId, userId) {
+  if (!conversationId) throw new Error("CONVERSATION_ID_REQUIRED");
+  if (!userId) throw new Error("USER_ID_REQUIRED");
+  const conversationRef = getConversationRef(conversationId);
+  const snapshot = await getDoc(conversationRef);
+  if (!snapshot.exists()) throw new Error("CONVERSATION_NOT_FOUND");
+  const conversation = snapshot.data();
+  if (!conversation.participantIds?.includes(userId)) {
+    throw new Error("NOT_A_CONVERSATION_PARTICIPANT");
+  }
+  const hiddenFor = (conversation.hiddenFor || []).filter((id) => id !== userId);
+  await updateDoc(conversationRef, { hiddenFor });
+}
+
 export function subscribeToMessages(
   conversationId,
   userId,

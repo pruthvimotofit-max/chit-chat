@@ -35,6 +35,7 @@ import {
   deleteMessage,
   getOrCreateConversation,
   hideConversationForUser,
+  restoreConversationForUser,
   markConversationRead,
   sendMessage,
   setMessageReaction,
@@ -97,6 +98,8 @@ function MessagesPage() {
   const [reactionPickerMessageId, setReactionPickerMessageId] = useState(null);
   const [swipedMessageId, setSwipedMessageId] = useState(null);
   const [swipedConversationId, setSwipedConversationId] = useState(null);
+  const [deletedConversation, setDeletedConversation] = useState(null);
+  const [restoringConversation, setRestoringConversation] = useState(false);
   const [conversationMenuOpen, setConversationMenuOpen] = useState(false);
   const [composerToolsOpen, setComposerToolsOpen] = useState(false);
   const [composerEmojiOpen, setComposerEmojiOpen] = useState(false);
@@ -450,6 +453,10 @@ function formatMessageTime(timestamp) {
     try {
       await hideConversationForUser(conversation.id, user.uid);
       setSwipedConversationId(null);
+      setDeletedConversation({
+        id: conversation.id,
+        name,
+      });
       if (activeConversationId === conversation.id) {
         setActiveConversationId(null);
         navigate("/messages");
@@ -457,6 +464,20 @@ function formatMessageTime(timestamp) {
     } catch (error) {
       console.error("Failed to delete conversation:", error);
       window.alert("Couldn't delete this conversation. Please try again.");
+    }
+  }
+
+  async function handleUndoDeleteConversation() {
+    if (!deletedConversation || restoringConversation || !user?.uid) return;
+    setRestoringConversation(true);
+    try {
+      await restoreConversationForUser(deletedConversation.id, user.uid);
+      setDeletedConversation(null);
+    } catch (error) {
+      console.error("Failed to restore conversation:", error);
+      window.alert("Couldn't restore this conversation. Please try again.");
+    } finally {
+      setRestoringConversation(false);
     }
   }
 
@@ -1936,6 +1957,26 @@ async function openSavedComposer() {
 
   return (
     <main className="messages-page">
+      {deletedConversation && (
+        <div className="cc-conversation-undo-toast" role="status" aria-live="polite">
+          <span>Conversation with {deletedConversation.name} deleted</span>
+          <button
+            type="button"
+            onClick={() => void handleUndoDeleteConversation()}
+            disabled={restoringConversation}
+          >
+            {restoringConversation ? "Restoring…" : "Undo"}
+          </button>
+          <button
+            type="button"
+            className="cc-conversation-undo-dismiss"
+            aria-label="Dismiss notification"
+            onClick={() => setDeletedConversation(null)}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
       <section className={`messages-shell ${activeConversationId ? "chat-open" : ""}`}>
         <aside className="messages-sidebar">
           <div className="messages-sidebar-header">
