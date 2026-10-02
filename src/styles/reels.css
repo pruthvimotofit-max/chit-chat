@@ -1474,3 +1474,194 @@
   line-height: 1;
   color: #e53935;
 }
+
+
+/* =========================================================
+   REELS UI POLISH — consolidated responsive overrides
+   ========================================================= */
+.reels-page,
+.reels-page * {
+  box-sizing: border-box;
+}
+
+.reels-page {
+  isolation: isolate;
+  background: #07070a;
+  color: #fff;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.reels-header {
+  left: 0 !important;
+  right: 0;
+  min-height: 64px;
+  padding: 0 18px;
+  background: linear-gradient(180deg, rgba(0,0,0,.44), transparent);
+}
+
+.reels-header h1 {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 750;
+  letter-spacing: -.45px;
+  text-shadow: 0 2px 14px rgba(0,0,0,.28);
+}
+
+.reels-camera-button,
+.reels-mute-button,
+.reels-play-button,
+.reels-action,
+.reels-follow-button {
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.reels-camera-button {
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 15px;
+  background: rgba(22,22,28,.52);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  backdrop-filter: blur(16px);
+  transition: transform .18s ease, background .18s ease;
+}
+.reels-camera-button:hover { background: rgba(214,41,118,.82); transform: translateY(-1px); }
+
+.reels-feed {
+  background: radial-gradient(ellipse at center, #18141a 0%, #08080a 68%);
+  overscroll-behavior-y: contain;
+}
+
+.reels-item {
+  width: 100%;
+  min-width: 0;
+  padding: 0 90px 0 20px;
+}
+
+.reels-item .reels-video-container {
+  width: min(430px, calc((100dvh - 36px) * 9 / 16));
+  height: min(calc(100dvh - 36px), 780px);
+  max-height: calc(100dvh - 36px);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 22px;
+  box-shadow: 0 28px 90px rgba(0,0,0,.52);
+  background: #101014;
+}
+
+.reels-video { object-fit: cover; }
+.reels-overlay {
+  background: linear-gradient(180deg, rgba(0,0,0,.18) 0%, transparent 32%, rgba(0,0,0,.08) 50%, rgba(0,0,0,.78) 100%);
+}
+
+.reels-info {
+  left: 18px;
+  right: 74px;
+  bottom: 24px;
+  color: #fff;
+  text-shadow: 0 1px 8px rgba(0,0,0,.24);
+}
+.reels-profile-row { gap: 10px; min-width: 0; }
+.reels-avatar { width: 40px; height: 40px; flex: 0 0 40px; border: 2px solid rgba(255,255,255,.92); }
+.reels-username { color: #fff; font-size: 14px; font-weight: 750; cursor: pointer; }
+.reels-follow-button {
+  min-height: 30px;
+  padding: 5px 12px;
+  border: 1px solid rgba(255,255,255,.82);
+  border-radius: 999px;
+  background: rgba(255,255,255,.08);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  backdrop-filter: blur(12px);
+  transition: background .18s ease, border-color .18s ease;
+}
+.reels-follow-button:hover,
+.reels-follow-button.following { background: rgba(255,255,255,.18); }
+.reels-caption { margin: 10px 0 8px; color: #fff; font-size: 14px; line-height: 1.45; overflow-wrap: anywhere; }
+.reels-audio {
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255,255,255,.94);
+  font-size: 12px;
+  font-weight: 550;
+  overflow: hidden;
+}
+.reels-audio > span:last-child { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.reels-music { display: inline-grid; place-items: center; width: 23px; height: 23px; flex: 0 0 23px; border-radius: 7px; background: rgba(255,255,255,.15); font-size: 14px; }
+
+.reels-desktop-actions { left: calc(50% + 235px); right: auto; top: 50%; bottom: auto; transform: translateY(-50%); }
+.reels-actions { gap: 19px; }
+.reels-action {
+  min-width: 48px;
+  min-height: 48px;
+  gap: 5px;
+  border: 0;
+  border-radius: 16px;
+  padding: 7px 5px;
+  background: transparent;
+  color: rgba(255,255,255,.96);
+  font-size: 11px;
+  font-weight: 700;
+  transition: transform .18s ease, background .18s ease, color .18s ease;
+}
+.reels-action:hover { background: rgba(255,255,255,.12); transform: scale(1.04); }
+.reels-action svg { width: 25px; height: 25px; stroke-width: 2.1; filter: drop-shadow(0 2px 5px rgba(0,0,0,.24)); }
+.reels-action.liked { color: #ff4f7b; }
+.reels-action.saved { color: #fff; }
+.reels-mute-button {
+  width: 40px; height: 40px;
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(0,0,0,.42);
+  box-shadow: 0 6px 20px rgba(0,0,0,.18);
+  backdrop-filter: blur(14px);
+}
+.reels-play-button { border: 1px solid rgba(255,255,255,.2); box-shadow: 0 12px 38px rgba(0,0,0,.22); }
+
+@media (max-width: 768px) {
+  .reels-page { width: 100%; height: 100dvh; height: 100vh; }
+  .reels-feed { width: 100%; height: 100%; }
+  .reels-item { width: 100%; height: 100%; min-height: 100%; padding: 0; }
+  .reels-item .reels-video-container {
+    width: 100%; height: 100%; max-height: none;
+    border: 0; border-radius: 0; box-shadow: none; aspect-ratio: auto;
+  }
+  .reels-header { height: 58px; min-height: 58px; padding: 0 14px; }
+  .reels-header h1 { font-size: 19px; }
+  .reels-camera-button { top: 9px; right: 12px; width: 40px; height: 40px; }
+  .reels-desktop-actions { display: none !important; }
+  .reels-mobile-actions {
+    display: block !important;
+    position: absolute;
+    right: 10px;
+    bottom: max(116px, calc(env(safe-area-inset-bottom) + 96px));
+    z-index: 12;
+  }
+  .reels-actions { gap: 12px; }
+  .reels-action {
+    min-width: 46px; min-height: 46px; padding: 5px 3px;
+    border-radius: 14px; background: rgba(0,0,0,.12);
+  }
+  .reels-action svg { width: 25px; height: 25px; }
+  .reels-info {
+    left: 15px;
+    right: 72px;
+    bottom: max(24px, calc(env(safe-area-inset-bottom) + 18px));
+  }
+  .reels-profile-row { gap: 8px; flex-wrap: nowrap; }
+  .reels-avatar { width: 36px; height: 36px; flex-basis: 36px; }
+  .reels-caption { font-size: 13px; line-height: 1.4; }
+  .reels-mute-button { top: 68px; right: 14px; }
+}
+
+@media (max-width: 380px) {
+  .reels-info { left: 12px; right: 64px; }
+  .reels-mobile-actions { right: 6px; }
+  .reels-action { min-width: 42px; }
+}
