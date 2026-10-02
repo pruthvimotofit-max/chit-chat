@@ -143,6 +143,18 @@ export function subscribeToConversations(
   );
 }
 
+// Hides a conversation from only the current user's Messages list.
+export async function hideConversationForUser(conversationId, userId) {
+  if (!conversationId) throw new Error("CONVERSATION_ID_REQUIRED");
+  if (!userId) throw new Error("USER_ID_REQUIRED");
+  const conversationRef = getConversationRef(conversationId);
+  const snapshot = await getDoc(conversationRef);
+  if (!snapshot.exists()) throw new Error("CONVERSATION_NOT_FOUND");
+  const conversation = snapshot.data();
+  if (!conversation.participantIds?.includes(userId)) throw new Error("NOT_A_CONVERSATION_PARTICIPANT");
+  await updateDoc(conversationRef, { hiddenFor: arrayUnion(userId) });
+}
+
 export function subscribeToMessages(
   conversationId,
   userId,
