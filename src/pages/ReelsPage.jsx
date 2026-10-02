@@ -609,6 +609,7 @@ devel
 
 function ReelCard({ reel, active, onComments }) {
   const videoRef = useRef(null);
+  const audioRef = useRef(null);
 
   const { user } = useAuth();
 
@@ -723,7 +724,18 @@ function ReelCard({ reel, active, onComments }) {
 
     if (!video) return;
 
-    video.muted = muted;
+    video.muted = Boolean(reel.audioUrl) || muted;
+
+    const audio = audioRef.current;
+    if (audio) {
+      audio.muted = muted;
+      if (active && reel.audioUrl) {
+        audio.currentTime = video.currentTime || 0;
+        audio.play().catch(() => {});
+      } else {
+        audio.pause();
+      }
+    }
 
     if (active) {
       video
@@ -734,7 +746,7 @@ function ReelCard({ reel, active, onComments }) {
       video.pause();
       setPlaying(false);
     }
-  }, [active, muted]);
+  }, [active, muted, reel.audioUrl]);
 
   function togglePlay() {
     const video = videoRef.current;
@@ -773,6 +785,18 @@ function ReelCard({ reel, active, onComments }) {
           <div className="reels-video-empty">
             <span>No video available</span>
           </div>
+        )}
+
+        {reel.audioUrl && (
+          <audio
+            ref={audioRef}
+            src={reel.audioUrl}
+            loop
+            preload="metadata"
+            onLoadedMetadata={(event) => {
+              if (videoRef.current) event.currentTarget.currentTime = videoRef.current.currentTime || 0;
+            }}
+          />
         )}
 
         <div className="reels-overlay" />
@@ -912,7 +936,8 @@ function ReelsPage() {
               reel.videoUrl ||
               "",
             caption: reel.caption || "",
-            audio: reel.audio || "Original audio",
+            audio: reel.audio?.title || reel.audio || "Original audio",
+            audioUrl: reel.audio?.url || "",
           };
         });
 
@@ -1043,7 +1068,7 @@ function ReelsPage() {
           className="reels-camera-button"
           onClick={() =>
             (window.location.href =
-              "/create?type=reel")
+              "/create/reel")
           }
           aria-label="Create reel"
         >
