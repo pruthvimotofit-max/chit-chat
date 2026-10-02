@@ -1833,6 +1833,26 @@
   padding: 4px 8px 16px;
 }
 
+.message-conversation-swipe-shell {
+  position: relative; overflow: hidden; border-radius: 12px; touch-action: pan-y;
+}
+.message-conversation-delete {
+  position: absolute; inset: 0 0 0 auto; z-index: 1; width: 84px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 5px; border: 0; border-radius: 12px;
+  background: linear-gradient(145deg, #ff5c70, #e3294e); color: #fff;
+  font-size: 11px; font-weight: 700; opacity: 0; pointer-events: none;
+  transition: opacity 180ms ease;
+}
+.message-conversation-swipe-shell.is-swiped .message-conversation-delete { opacity: 1; pointer-events: auto; }
+.message-conversation-swipe-shell .message-conversation {
+  position: relative; z-index: 2; transition: transform 220ms cubic-bezier(.2,.8,.2,1); will-change: transform;
+}
+.message-conversation-swipe-shell.is-swiped .message-conversation { transform: translateX(-84px); }
+@media (prefers-reduced-motion: reduce) {
+  .message-conversation-swipe-shell .message-conversation, .message-conversation-delete { transition: none; }
+}
+
 .message-conversation {
   width: 100%;
   min-height: 72px;
