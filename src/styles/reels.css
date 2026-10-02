@@ -1665,3 +1665,109 @@
   .reels-mobile-actions { right: 6px; }
   .reels-action { min-width: 42px; }
 }
+
+
+/* Modern icon system and resilient button reset for Reels */
+.reels-page,
+.reels-page * {
+  box-sizing: border-box;
+}
+
+.reels-page button {
+  appearance: none;
+  -webkit-appearance: none;
+  font-family: inherit;
+  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.reels-page .reels-action,
+.reels-page .reels-camera-button,
+.reels-page .reels-mute-button,
+.reels-page .reels-play-button,
+.reels-page .reels-follow-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+.reels-page .reels-camera-button {
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 16px;
+  color: #fff;
+  background: rgba(18,18,24,.62);
+  box-shadow: 0 8px 24px rgba(0,0,0,.22);
+  backdrop-filter: blur(18px);
+}
+.reels-page .reels-camera-button svg { width: 21px; height: 21px; stroke-width: 2.1; }
+.reels-page .reels-camera-button:hover { background: #d62976; transform: translateY(-1px); }
+
+.reels-page .reels-mute-button {
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(12,12,16,.58);
+  box-shadow: 0 6px 20px rgba(0,0,0,.24);
+  backdrop-filter: blur(16px);
+}
+.reels-page .reels-mute-button svg { width: 19px; height: 19px; stroke-width: 2.15; }
+
+.reels-page .reels-play-button {
+  width: 68px;
+  height: 68px;
+  border: 1px solid rgba(255,255,255,.24);
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(10,10,14,.42);
+  box-shadow: 0 10px 36px rgba(0,0,0,.3);
+  backdrop-filter: blur(16px);
+}
+.reels-page .reels-play-button svg { width: 27px; height: 27px; stroke-width: 2; }
+
+.reels-page .reels-action {
+  min-width: 48px;
+  min-height: 48px;
+  padding: 7px 5px;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 16px;
+  color: rgba(255,255,255,.96);
+  background: rgba(18,18,22,.46);
+  box-shadow: 0 6px 18px rgba(0,0,0,.12);
+  backdrop-filter: blur(14px);
+  font-size: 11px;
+  font-weight: 700;
+}
+.reels-page .reels-action svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  stroke-width: 1.9;
+}
+.reels-page .reels-action span { font-size: 10px; line-height: 1; }
+.reels-page .reels-action:hover { background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.26); transform: translateY(-2px); }
+.reels-page .reels-action:active { transform: scale(.94); }
+.reels-page .reels-action.liked { color: #ff5b87; background: rgba(214,41,118,.2); border-color: rgba(255,91,135,.36); }
+.reels-page .reels-action.saved { color: #ffcae0; background: rgba(214,41,118,.16); border-color: rgba(214,41,118,.34); }
+.reels-page .reels-action:disabled { opacity: .6; cursor: wait; }
+.reels-page .reels-action.reels-more { min-width: 46px; }
+.reels-page .reels-action.reels-more svg { width: 23px; height: 23px; }
+
+.reels-page button:focus-visible {
+  outline: 2px solid #ff77ad;
+  outline-offset: 3px;
+}
+
+@media (max-width: 768px) {
+  .reels-page .reels-camera-button { width: 42px; height: 42px; border-radius: 15px; }
+  .reels-page .reels-action { min-width: 46px; min-height: 46px; padding: 6px 4px; border-radius: 15px; background: rgba(10,10,14,.48); }
+  .reels-page .reels-action svg { width: 24px; height: 24px; }
+}
