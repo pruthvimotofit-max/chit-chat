@@ -34,6 +34,7 @@ import { useAuth } from "../features/auth/AuthProvider";
 import {
   deleteMessage,
   getOrCreateConversation,
+  hideConversationForUser,
   markConversationRead,
   sendMessage,
   setMessageReaction,
@@ -95,6 +96,7 @@ function MessagesPage() {
   const [otherUserReadState, setOtherUserReadState] = useState(null);
   const [reactionPickerMessageId, setReactionPickerMessageId] = useState(null);
   const [swipedMessageId, setSwipedMessageId] = useState(null);
+  const [swipedConversationId, setSwipedConversationId] = useState(null);
   const [conversationMenuOpen, setConversationMenuOpen] = useState(false);
   const [composerToolsOpen, setComposerToolsOpen] = useState(false);
   const [composerEmojiOpen, setComposerEmojiOpen] = useState(false);
@@ -118,6 +120,7 @@ const [sharingLocation, setSharingLocation] = useState(false);
 
   const messagesEndRef = useRef(null);
   const messageSwipeRef = useRef(null);
+  const conversationSwipeRef = useRef(null);
   const attachmentInputRef = useRef(null);
   const voiceRecorderRef = useRef(null);
   const voiceStreamRef = useRef(null);
@@ -420,14 +423,51 @@ function formatMessageTime(timestamp) {
     );
   }
 
+  function handleConversationPointerDown(event, conversationId) {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    conversationSwipeRef.current = { conversationId, startX: event.clientX, startY: event.clientY };
+  }
+
+  function handleConversationPointerUp(event, conversationId) {
+    const swipe = conversationSwipeRef.current;
+    conversationSwipeRef.current = null;
+    if (!swipe || swipe.conversationId !== conversationId) return;
+    const deltaX = event.clientX - swipe.startX;
+    const deltaY = event.clientY - swipe.startY;
+    if (Math.abs(deltaY) > Math.abs(deltaX)) return;
+    if (deltaX < -48) setSwipedConversationId(conversationId);
+    else if (deltaX > 40) setSwipedConversationId(null);
+  }
+
+  async function handleDeleteConversation(conversation) {
+    const otherUserId = conversation.participantIds?.find((id) => id !== user?.uid);
+    const otherUser = conversationProfiles[otherUserId] || null;
+    const name = otherUser?.displayName || otherUser?.username || "this conversation";
+    if (!window.confirm(`Delete your conversation with ${name}? It will disappear from your Messages list, but the other person's copy will remain.`)) {
+      setSwipedConversationId(null);
+      return;
+    }
+    try {
+      await hideConversationForUser(conversation.id, user.uid);
+      setSwipedConversationId(null);
+      if (activeConversationId === conversation.id) {
+        setActiveConversationId(null);
+        navigate("/messages");
+      }
+    } catch (error) {
+      console.error("Failed to delete conversation:", error);
+      window.alert("Couldn't delete this conversation. Please try again.");
+    }
+  }
+
   const filteredConversations = useMemo(() => {
     const value = search.trim().toLowerCase();
 
-    if (!value || showNewMessage) {
-      return conversations;
-    }
-
-    return conversations.filter((conversation) => {
+    const visibleConversations = conversations.filter(
+      (conversation) => !conversation.hiddenFor?.includes(user?.uid),
+    );
+    if (!value || showNewMessage) return visibleConversations;
+    return visibleConversations.filter((conversation) => {
       const otherUserId =
         conversation.participantIds?.find(
           (id) => id !== user?.uid,
@@ -2041,9 +2081,19 @@ async function openSavedComposer() {
                   );
 
                   return (
+                    <div
+                      key={conversation.id}
+                      className={`message-conversation-swipe-shell ${swipedConversationId === conversation.id ? "is-swiped" : ""}`}
+                      onPointerDown={(event) => handleConversationPointerDown(event, conversation.id)}
+                      onPointerUp={(event) => handleConversationPointerUp(event, conversation.id)}
+                      onPointerCancel={() => { conversationSwipeRef.current = null; }}
+                    >
+                      <button type="button" className="message-conversation-delete" onClick={() => void handleDeleteConversation(conversation)} aria-label="Delete conversation" title="Delete conversation">
+                        <Trash2 size={19} strokeWidth={2.2} />
+                        <span>Delete</span>
+                      </button>
                     <button
                       type="button"
-                      key={conversation.id}
                       className={`message-conversation ${
                         activeConversationId ===
                         conversation.id
@@ -2051,12 +2101,9 @@ async function openSavedComposer() {
                           : ""
                       }`}
                       onClick={() => {
-                        setActiveConversationId(
-                          conversation.id,
-                        );
-                        navigate(
-                          `/messages/${conversation.id}`,
-                        );
+                        if (swipedConversationId === conversation.id) { setSwipedConversationId(null); return; }
+                        setActiveConversationId(conversation.id);
+                        navigate(`/messages/${conversation.id}`);
                       }}
                     >
                       <div className="message-avatar">
@@ -2097,6 +2144,7 @@ async function openSavedComposer() {
                         </span>
                       )}
                     </button>
+                    </div>
                   );
                 },
               )
